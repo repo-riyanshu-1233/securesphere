@@ -1,182 +1,359 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // DOM Elements
-    const terminalScreen = document.getElementById('terminal-screen');
-    const dashboardScreen = document.getElementById('dashboard-screen');
-    const noticeModal = document.getElementById('notice-modal');
-    const setupModal = document.getElementById('setup-modal');
-    const infoModal = document.getElementById('info-modal');
-    const chatScreen = document.getElementById('chat-screen');
-    const userSelectModal = document.getElementById('user-select-modal');
+const MAINTENANCE_MODE = false;
+const SHOW_UNDER_BUILD_NOTICE = true;
 
-    const openNoticeBtn = document.getElementById('open-notice-btn');
-    const proceedToSetupBtn = document.getElementById('proceed-to-setup-btn');
-    const menuToggleBtn = document.getElementById('menu-toggle-btn');
-    const dropdownMenu = document.getElementById('dropdown-menu');
+const USER_EMAIL = "your-email@example.com";
+const USER_INSTAGRAM = "https://instagram.com/your_username";
+const PORTFOLIO_WEBSITE = "https://your-portfolio-website.com";
 
-    const closeNoticeBtn = document.getElementById('close-notice-btn');
-    const closeSetupBtn = document.getElementById('close-setup-btn');
-    const closeInfoBtn = document.getElementById('close-info-btn');
-    const closeUserSelectBtn = document.getElementById('close-user-select-btn');
+let peer = null;
+let connections = {};
+let currentMode = '';
+let isHost = false;
+let userName = '';
+let roomCode = '';
+let noticeTimer = null;
 
-    const createRoomBtn = document.getElementById('create-room-btn');
-    const joinRoomBtn = document.getElementById('join-room-btn');
-    const exitChatBtn = document.getElementById('exit-chat-btn');
-    const dissolveChatBtn = document.getElementById('dissolve-chat-btn');
-    const sendMsgBtn = document.getElementById('send-msg-btn');
-    const broadcastSelectBtn = document.getElementById('broadcast-select-btn');
+const logLines = [
+    { text: "INITIALIZING SECURE MESH SYSTEM...", type: "log-green" },
+    { text: "ALLOCATING VIRTUAL MEMORY SPACES...", type: "log-blue" },
+    { text: "LOADING SHA-256 ENCRYPTION MODULES...", type: "log-blue" },
+    { text: "ESTABLISHING RTC PEER DISCOVERY SOCKETS...", type: "log-yellow" },
+    { text: "VERIFYING P2P PROTOCOLS & HANDSHAKES...", type: "log-yellow" },
+    { text: "CONNECTING TO SIGNALING RELAY SERVER...", type: "log-blue" },
+    { text: "ZERO LOG MEMORY BUFFER LOADED...", type: "log-green" },
+    { text: "SYSTEM ALL REAL-TIME NODES READY.", type: "log-green" }
+];
 
-    const messageInput = document.getElementById('message-input');
-    const chatMessages = document.getElementById('chat-messages');
-    const chatRoomTitle = document.getElementById('chat-room-title');
-    const chatRoomType = document.getElementById('chat-room-type');
-    const userList = document.getElementById('user-list');
-
-    let selectedMode = 'group';
-    let currentRecipient = 'All';
-    let mockUsers = ['User_Alpha', 'User_Beta', 'User_Cyber'];
-
-    // 1. TERMINAL BOOT ANIMATION WITH FADE OUT
-    setTimeout(() => {
-        terminalScreen.classList.add('fade-out');
-        setTimeout(() => {
-            terminalScreen.classList.add('hidden');
-            terminalScreen.classList.remove('fade-out');
-            dashboardScreen.classList.remove('hidden');
-            dashboardScreen.classList.add('fade-in');
-        }, 600);
-    }, 2200);
-
-    // MENU TOGGLE
-    menuToggleBtn.addEventListener('click', () => {
-        dropdownMenu.classList.toggle('hidden');
-    });
-
-    // OPEN SETUP VIA NOTICE
-    openNoticeBtn.addEventListener('click', () => {
-        noticeModal.classList.remove('hidden');
-    });
-
-    proceedToSetupBtn.addEventListener('click', () => {
-        noticeModal.classList.add('hidden');
-        setupModal.classList.remove('hidden');
-    });
-
-    // CLOSE MODALS
-    closeNoticeBtn.addEventListener('click', () => noticeModal.classList.add('hidden'));
-    closeSetupBtn.addEventListener('click', () => setupModal.classList.add('hidden'));
-    closeInfoBtn.addEventListener('click', () => infoModal.classList.add('hidden'));
-    closeUserSelectBtn.addEventListener('click', () => userSelectModal.classList.add('hidden'));
-
-    // TAB SELECTION (GROUP / PRIVATE / BROADCAST)
-    const tabs = document.querySelectorAll('.neu-tab');
-    tabs.forEach(tab => {
-        tab.addEventListener('click', (e) => {
-            tabs.forEach(t => t.classList.remove('active'));
-            e.target.classList.add('active');
-            selectedMode = e.target.getAttribute('data-type');
-        });
-    });
-
-    // START CHAT ROOM
-    function startChatSession(action) {
-        const username = document.getElementById('user-name-input').value.trim() || 'Anonymous';
-        const code = document.getElementById('room-code-input').value.trim() || Math.floor(1000 + Math.random() * 9000);
-
-        setupModal.classList.add('hidden');
-        dashboardScreen.classList.add('hidden');
-        chatScreen.classList.remove('hidden');
-
-        chatRoomTitle.textContent = `Room: #${code}`;
-        chatRoomType.textContent = `${selectedMode.toUpperCase()} MODE (${username})`;
-
-        // Show Broadcast "+" button if broadcast mode
-        if (selectedMode === 'broadcast') {
-            broadcastSelectBtn.classList.remove('hidden');
-        } else {
-            broadcastSelectBtn.classList.add('hidden');
-        }
-
-        // Add System Join Msg
-        chatMessages.innerHTML = `<div class="msg sys-msg">Encrypted session started in ${selectedMode} mode.</div>`;
+function runTerminal() {
+    if (MAINTENANCE_MODE) {
+        document.getElementById('maintenance-screen').classList.remove('hidden');
+        document.getElementById('terminal-screen').classList.add('hidden');
+        document.getElementById('dashboard-screen').classList.add('hidden');
+        return;
     }
 
-    createRoomBtn.addEventListener('click', () => startChatSession('create'));
-    joinRoomBtn.addEventListener('click', () => startChatSession('join'));
+    const logBox = document.getElementById('terminal-logs');
+    logBox.innerHTML = '';
+    document.getElementById('terminal-screen').classList.remove('hidden');
+    document.getElementById('dashboard-screen').classList.add('hidden');
+    document.getElementById('chat-screen').classList.add('hidden');
 
-    // SEND MESSAGE
-    function sendMessage() {
-        const text = messageInput.value.trim();
-        if (!text) return;
-
-        const msgDiv = document.createElement('div');
-        msgDiv.className = 'msg my-msg';
-        
-        if (selectedMode === 'broadcast' && currentRecipient !== 'All') {
-            msgDiv.textContent = `[To ${currentRecipient}]: ${text}`;
-        } else {
-            msgDiv.textContent = text;
-        }
-
-        chatMessages.appendChild(msgDiv);
-        messageInput.value = '';
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-
-    sendMsgBtn.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendMessage();
-    });
-
-    // BROADCAST SELECT RECIPIENT (+)
-    broadcastSelectBtn.addEventListener('click', () => {
-        userList.innerHTML = '';
-        mockUsers.forEach(u => {
-            const item = document.createElement('div');
-            item.className = 'user-item';
-            item.textContent = u;
-            item.addEventListener('click', () => {
-                currentRecipient = u;
-                alert(`Direct target set to: ${u}`);
-                userSelectModal.classList.add('hidden');
-            });
-            userList.appendChild(item);
-        });
-        userSelectModal.classList.remove('hidden');
-    });
-
-    // EXIT CHAT (NO TERMINAL - DIRECT DASHBOARD)
-    exitChatBtn.addEventListener('click', () => {
-        chatScreen.classList.add('hidden');
-        dashboardScreen.classList.remove('hidden');
-    });
-
-    // DISSOLVE CHAT (RESET EVERYTHING BACK TO TERMINAL BOOT)
-    dissolveChatBtn.addEventListener('click', () => {
-        chatScreen.classList.add('hidden');
-        dashboardScreen.classList.add('hidden');
-        terminalScreen.classList.remove('hidden');
-
-        // Re-trigger Terminal Sequence
-        setTimeout(() => {
-            terminalScreen.classList.add('fade-out');
+    let lineIndex = 0;
+    function typeNextLine() {
+        if (lineIndex >= logLines.length) {
             setTimeout(() => {
-                terminalScreen.classList.add('hidden');
-                terminalScreen.classList.remove('fade-out');
-                dashboardScreen.classList.remove('hidden');
-            }, 600);
-        }, 1800);
+                document.getElementById('terminal-screen').classList.add('hidden');
+                document.getElementById('dashboard-screen').classList.remove('hidden');
+                triggerUnderBuildNotice();
+            }, 1200);
+            return;
+        }
+        const currentLine = logLines[lineIndex];
+        const div = document.createElement('div');
+        div.className = currentLine.type;
+        logBox.appendChild(div);
+
+        let charIndex = 0;
+        const fullText = `> ${currentLine.text}`;
+        const timer = setInterval(() => {
+            div.innerText = fullText.slice(0, charIndex);
+            logBox.scrollTop = logBox.scrollHeight;
+            charIndex++;
+            if (charIndex > fullText.length) {
+                clearInterval(timer);
+                lineIndex++;
+                setTimeout(typeNextLine, 650);
+            }
+        }, 35);
+    }
+    typeNextLine();
+}
+
+function triggerUnderBuildNotice() {
+    if (SHOW_UNDER_BUILD_NOTICE) {
+        const noticeModal = document.getElementById('under-build-modal');
+        noticeModal.classList.remove('hidden');
+
+        noticeTimer = setTimeout(() => {
+            closeNoticeModal();
+        }, 10000);
+    }
+}
+
+function closeNoticeModal() {
+    if(noticeTimer) clearTimeout(noticeTimer);
+    document.getElementById('under-build-modal').classList.add('hidden');
+}
+
+window.onload = runTerminal;
+
+function toggleDropdown() {
+    const menu = document.getElementById('dropdown-menu');
+    menu.classList.toggle('hidden');
+}
+
+function showModeSelection() {
+    document.getElementById('mode-modal').classList.remove('hidden');
+    document.getElementById('dropdown-menu').classList.add('hidden');
+}
+
+function openRoomForm(mode) {
+    currentMode = mode;
+    document.getElementById('mode-modal').classList.add('hidden');
+    document.getElementById('form-modal').classList.remove('hidden');
+    document.getElementById('form-title').innerText = `${mode.toUpperCase()} SETUP`;
+    toggleFormMode('create');
+}
+
+function toggleFormMode(action) {
+    const createTab = document.getElementById('tab-create');
+    const joinTab = document.getElementById('tab-join');
+
+    if(action === 'create') {
+        createTab.classList.add('active');
+        joinTab.classList.remove('active');
+        document.getElementById('create-sec').classList.remove('hidden');
+        document.getElementById('join-sec').classList.add('hidden');
+    } else {
+        joinTab.classList.add('active');
+        createTab.classList.remove('active');
+        document.getElementById('create-sec').classList.add('hidden');
+        document.getElementById('join-sec').classList.remove('hidden');
+    }
+}
+
+function closeModals() {
+    document.getElementById('mode-modal').classList.add('hidden');
+    document.getElementById('form-modal').classList.add('hidden');
+    document.getElementById('info-modal').classList.add('hidden');
+}
+
+function openInfoModal(type) {
+    document.getElementById('dropdown-menu').classList.add('hidden');
+    const modal = document.getElementById('info-modal');
+    modal.classList.remove('hidden');
+
+    const title = document.getElementById('info-title');
+    const body = document.getElementById('info-body');
+    
+    if(type === 'about') {
+        title.innerText = "About SecureSphere";
+        body.innerText = "SecureSphere is an end-to-end peer-to-peer secure messaging portal using WebRTC memory mesh.";
+    } else if(type === 'help') {
+        title.innerText = "Help & Support";
+        body.innerHTML = `Create or join using a 4-char room code.<br><br>Have questions or feedback? Mail us at:<br><a class="link-btn" href="mailto:${USER_EMAIL}">${USER_EMAIL}</a>`;
+    } else if(type === 'contact') {
+        title.innerText = "Contact Us";
+        body.innerHTML = `Designed and Developed by <strong>Riyanshu</strong>.<br><br>
+        📧 Email: <a class="link-btn" href="mailto:${USER_EMAIL}">${USER_EMAIL}</a><br><br>
+        📸 Instagram: <a class="link-btn" href="${USER_INSTAGRAM}" target="_blank">View Profile ↗</a>`;
+    }
+}
+
+function openOtherProjects() {
+    document.getElementById('dropdown-menu').classList.add('hidden');
+    window.open(PORTFOLIO_WEBSITE, '_blank');
+}
+
+function closeInfoModal() { document.getElementById('info-modal').classList.add('hidden'); }
+
+function showCustomAlert(title, message, buttons = []) {
+    const modal = document.getElementById('custom-alert-modal');
+    document.getElementById('alert-title').innerText = title;
+    document.getElementById('alert-desc').innerText = message;
+    
+    const actionsContainer = document.getElementById('alert-actions');
+    actionsContainer.innerHTML = '';
+
+    if(buttons.length === 0) {
+        buttons = [{ text: "OK", class: "neu-primary-btn", onClick: closeCustomAlert }];
+    }
+
+    buttons.forEach(btn => {
+        const b = document.createElement('button');
+        b.innerText = btn.text;
+        b.className = btn.class || 'neu-secondary-btn';
+        b.onclick = () => {
+            closeCustomAlert();
+            if(btn.onClick) btn.onClick();
+        };
+        actionsContainer.appendChild(b);
     });
 
-    // DROPDOWN NAV INFO
-    const showInfo = (title, text) => {
-        document.getElementById('info-title').textContent = title;
-        document.getElementById('info-body').textContent = text;
-        dropdownMenu.classList.add('hidden');
-        infoModal.classList.remove('hidden');
-    };
+    modal.classList.remove('hidden');
+}
 
-    document.getElementById('nav-about').addEventListener('click', () => showInfo('About SecureSphere', 'SecureSphere is a lightweight, zero-log, end-to-end encrypted messaging interface designed for peer-to-peer confidentiality.'));
-    document.getElementById('nav-help').addEventListener('click', () => showInfo('Help & Usage', '1. Click Start Chatting.\n2. Choose Chat Mode.\n3. Enter Room Code & Join.\n4. Dissolve destroys the active session context immediately.'));
-    document.getElementById('nav-contact').addEventListener('click', () => showInfo('Contact Us', 'Support Email: support@securesphere.io\nInstagram: @securesphere.official'));
-    document.getElementById('nav-projects').addEventListener('click', () => showInfo('Other Projects', 'Explore our suite of security-first utilities at https://securesphere.io/ecosystem'));
-});
+function closeCustomAlert() {
+    document.getElementById('custom-alert-modal').classList.add('hidden');
+}
+
+function initializePeer(customId = null) {
+    return new Promise((resolve) => {
+        peer = customId ? new Peer(customId) : new Peer();
+        peer.on('open', (id) => resolve(id));
+        peer.on('connection', handleIncomingConnection);
+    });
+}
+
+async function handleCreateRoom() {
+    userName = document.getElementById('user-name-input').value.trim() || 'Host';
+    const inputCode = document.getElementById('custom-code-input').value.trim().toLowerCase();
+    
+    roomCode = inputCode.length === 4 ? inputCode : Math.random().toString(36).substring(2, 6);
+    
+    isHost = true;
+    await initializePeer(`ss-${currentMode}-${roomCode}`);
+    setupChatUI();
+}
+
+async function handleJoinRoom() {
+    userName = document.getElementById('user-name-input').value.trim() || 'Guest';
+    roomCode = document.getElementById('join-code-input').value.trim().toLowerCase();
+    
+    if(!roomCode || roomCode.length !== 4) {
+        showCustomAlert("Invalid Code", "Please enter a valid 4-character Room Code.");
+        return;
+    }
+    
+    isHost = false;
+    await initializePeer();
+    
+    const hostPeerId = `ss-${currentMode}-${roomCode}`;
+    const conn = peer.connect(hostPeerId, { metadata: { userName } });
+    
+    conn.on('open', () => {
+        connections[hostPeerId] = conn;
+        setupConnectionListeners(conn);
+        setupChatUI();
+    });
+
+    conn.on('error', () => {
+        showCustomAlert("Connection Failed", "Room code not found or session closed.");
+    });
+}
+
+function handleIncomingConnection(conn) {
+    const remoteUser = conn.metadata ? conn.metadata.userName : 'Peer';
+    
+    conn.on('open', () => {
+        connections[conn.peer] = conn;
+        setupConnectionListeners(conn);
+        broadcastSystemMsg(`${remoteUser} joined the chat`);
+        updateUserCount();
+    });
+}
+
+function setupConnectionListeners(conn) {
+    conn.on('data', (data) => {
+        if(data.type === 'chat') {
+            renderMessage(data.sender, data.text, false);
+            if(isHost) broadcastData(data, conn.peer);
+        } else if(data.type === 'dissolve') {
+            showCustomAlert("Chat Dissolved", "The session has been wiped by host.", [
+                { text: "OK", class: "neu-primary-btn", onClick: restartSystem }
+            ]);
+        }
+    });
+
+    conn.on('close', () => {
+        delete connections[conn.peer];
+        updateUserCount();
+    });
+}
+
+function setupChatUI() {
+    document.getElementById('dashboard-screen').classList.add('hidden');
+    document.getElementById('form-modal').classList.add('hidden');
+    document.getElementById('chat-screen').classList.remove('hidden');
+
+    document.getElementById('header-room-title').innerText = `Code: ${roomCode.toUpperCase()}`;
+    updateUserCount();
+
+    if(isHost) {
+        document.getElementById('dissolve-btn').classList.remove('hidden');
+    }
+
+    renderSystemMsg(`Joined ${currentMode.toUpperCase()} Room as ${userName}. Code: ${roomCode.toUpperCase()}`);
+}
+
+function handleKeyPress(e) { if(e.key === 'Enter') sendChatMessage(); }
+
+function sendChatMessage() {
+    const input = document.getElementById('chat-input');
+    const text = input.value.trim();
+    if(!text) return;
+
+    const payload = { type: 'chat', sender: userName, text };
+    renderMessage('Me', text, true);
+    broadcastData(payload);
+    input.value = '';
+}
+
+function broadcastData(data, excludePeerId = null) {
+    Object.keys(connections).forEach(peerId => {
+        if(peerId !== excludePeerId && connections[peerId].open) {
+            connections[peerId].send(data);
+        }
+    });
+}
+
+function renderMessage(sender, text, isMe) {
+    const box = document.getElementById('chat-box');
+    const msgEl = document.createElement('div');
+    msgEl.className = `msg ${isMe ? 'my-msg' : 'peer-msg'} fade-item delay-1`;
+    
+    if(!isMe) {
+        const senderDiv = document.createElement('div');
+        senderDiv.className = 'msg-sender';
+        senderDiv.innerText = sender;
+        msgEl.appendChild(senderDiv);
+    }
+
+    msgEl.appendChild(document.createTextNode(text));
+    box.appendChild(msgEl);
+    box.scrollTop = box.scrollHeight;
+}
+
+function renderSystemMsg(text) {
+    const box = document.getElementById('chat-box');
+    const div = document.createElement('div');
+    div.className = 'msg sys-msg fade-item delay-1';
+    div.innerText = text;
+    box.appendChild(div);
+}
+
+function broadcastSystemMsg(text) {
+    renderSystemMsg(text);
+    broadcastData({ type: 'chat', sender: 'SYSTEM', text });
+}
+
+function updateUserCount() {
+    const count = Object.keys(connections).length + 1;
+    document.getElementById('active-user-count').innerText = `${count} User${count > 1 ? 's' : ''} Online`;
+}
+
+function promptDissolve() {
+    showCustomAlert("Dissolve Session", "Are you sure you want to dissolve this chat? All data will be wiped.", [
+        { text: "Cancel", class: "neu-secondary-btn", onClick: closeCustomAlert },
+        { text: "Dissolve", class: "danger-btn", onClick: executeDissolve }
+    ]);
+}
+
+function executeDissolve() {
+    broadcastData({ type: 'dissolve' });
+    setTimeout(() => {
+        restartSystem();
+    }, 300);
+}
+
+function restartSystem() {
+    if(peer) peer.destroy();
+    connections = {};
+    currentMode = '';
+    isHost = false;
+    userName = '';
+    roomCode = '';
+    document.getElementById('chat-box').innerHTML = '';
+    document.getElementById('dissolve-btn').classList.add('hidden');
+    runTerminal();
+}
