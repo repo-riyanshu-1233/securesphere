@@ -1,126 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SecureSphere</title>
-    <link rel="stylesheet" href="style.css?v=2.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- TERMINAL SCREEN -->
     <div id="terminal-screen">
-        <div class="terminal-header">SECURESPHERE V1.0 - INITIALIZING SYSTEM</div>
-        <div class="terminal-logs" id="terminal-logs">
-            <div class="log-green">&gt; INITIALIZING SECURE MESH SYSTEM...</div>
-            <div class="log-yellow">&gt; ALLOCATING VIRTUAL MEMORY SPACES...</div>
-            <div class="log-blue">&gt; LOADING SHA-256 ENCRYPTION MODULES...</div>
-            <div class="log-green">&gt; ESTABLISHING PEER-TO-PEER SOCKET PROTOCOLS...</div>
-            <div class="log-green">&gt; SYSTEM READY. LAUNCHING DASHBOARD...</div>
-        </div>
+        <div class="log">INITIALIZING SYSTEM...</div>
     </div>
 
-    <!-- MAIN DASHBOARD -->
-    <div id="dashboard-screen" class="hidden">
-        <button class="top-menu-btn" id="menu-toggle-btn">☰</button>
-        
-        <div class="dropdown-menu hidden" id="dropdown-menu">
-            <div class="dropdown-item" id="nav-about">About</div>
-            <div class="dropdown-item" id="nav-help">Help</div>
-            <div class="dropdown-item" id="nav-contact">Contact Us</div>
-            <div class="dropdown-item" id="nav-projects">Other Projects ↗</div>
-        </div>
-
-        <div class="brand-container fade-item">
-            <h1 class="brand-title">SECURESPHERE</h1>
-            <p class="brand-subtitle">Private • Zero Logs • Peer-to-Peer</p>
-        </div>
-
-        <button class="neu-primary-btn fade-item delay-1" id="open-notice-btn">Start Chatting</button>
+    <div id="dashboard-screen" style="display:none;">
+        <h1>SECURESPHERE</h1>
+        <button id="start-btn" class="neu-btn">Start Chatting</button>
     </div>
 
-    <!-- NOTICE MODAL -->
-    <div class="modal hidden" id="notice-modal">
-        <div class="neu-card">
-            <button class="modal-close-icon" id="close-notice-btn">×</button>
-            <h3 style="color: #d9534f;">Notice: Under Build</h3>
-            <p style="font-size: 13px; line-height: 1.5; color: #444; margin-bottom: 15px;">
-                This web app is still in the building process. Some features may be slow or might not work as expected.
-            </p>
-            <button class="neu-primary-btn" id="proceed-to-setup-btn">Continue</button>
-        </div>
-    </div>
-
-    <!-- ROOM SETUP MODAL -->
-    <div class="modal hidden" id="setup-modal">
-        <div class="neu-card">
-            <button class="modal-close-icon" id="close-setup-btn">×</button>
-            <h3>Room Setup</h3>
-            
-            <div class="tab-group">
-                <button class="neu-tab active" data-type="group">Group Chat</button>
-                <button class="neu-tab" data-type="private">Private (1-on-1)</button>
-                <button class="neu-tab" data-type="broadcast">Broadcast</button>
-            </div>
-
-            <input type="text" class="neu-input" id="user-name-input" placeholder="Enter Your Name">
-            <input type="text" class="neu-input" id="room-code-input" placeholder="Custom 4-Char Code (Optional)" maxlength="4">
-
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button class="neu-secondary-btn" id="create-room-btn">Create & Launch</button>
-                <button class="neu-secondary-btn" id="join-room-btn">Join Room</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- INFO / ABOUT / CONTACT MODAL -->
-    <div class="modal hidden" id="info-modal">
-        <div class="neu-card">
-            <button class="modal-close-icon" id="close-info-btn">×</button>
-            <h3 id="info-title">Info</h3>
-            <div id="info-body"></div>
-        </div>
-    </div>
-
-    <!-- CHAT SCREEN -->
-    <div id="chat-screen" class="hidden">
+    <div id="chat-screen" style="display:none;">
         <div class="chat-header">
-            <div class="header-left">
-                <div class="avatar-circle" id="room-avatar">S</div>
-                <div>
-                    <div class="header-title" id="chat-room-title">Room: #0000</div>
-                    <span class="badge" id="chat-room-type">Group Mode</span>
-                </div>
-            </div>
-            <div style="display: flex; gap: 8px;">
-                <button class="exit-btn" id="exit-chat-btn">Exit</button>
-                <button class="danger-btn" id="dissolve-chat-btn">Dissolve</button>
-            </div>
+            <span>Chat Room</span>
+            <button id="exit-btn">Exit</button>
+            <button id="dissolve-btn" style="color:red;">Dissolve</button>
         </div>
-
-        <div class="chat-box" id="chat-messages">
-            <div class="msg sys-msg">Welcome to SecureSphere Encrypted Session</div>
-        </div>
-
-        <!-- INPUT BAR FIX -->
+        <div id="msg-box"></div>
         <div class="input-bar">
-            <button class="plus-btn hidden" id="broadcast-select-btn" title="Select User">+</button>
-            <input type="text" class="chat-input" id="message-input" placeholder="Type a secure message...">
-            <button class="send-btn" id="send-msg-btn">➤</button>
+            <input type="text" id="msg-input" placeholder="Message...">
+            <button id="send-btn">+</button>
         </div>
     </div>
 
-    <!-- USER SELECTOR MODAL (FOR BROADCAST/SHARE-IT MODE) -->
-    <div class="modal hidden" id="user-select-modal">
-        <div class="neu-card">
-            <button class="modal-close-icon" id="close-user-select-btn">×</button>
-            <h3>Select Recipient</h3>
-            <div class="user-list-container" id="user-list">
-                <!-- Dynamic user list -->
-            </div>
-        </div>
-    </div>
-
-    <script src="script.js?v=2.0"></script>
+    <script src="script.js"></script>
 </body>
 </html>
