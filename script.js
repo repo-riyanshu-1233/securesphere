@@ -144,10 +144,10 @@ function openInfoModal(type) {
     
     if(type === 'about') {
         title.innerText = "About SecureSphere";
-        body.innerText = "SecureSphere is an end-to-end peer-to-peer secure messaging portal using WebRTC memory mesh.";
+        body.innerText = "SecureSphere is an end-to-end secure messaging portal using Peerjs server.";
     } else if(type === 'help') {
         title.innerText = "Help & Support";
-        body.innerHTML = `Create or join using a 4-char room code.<br><br>Have questions or feedback? Mail us at:<br><a class="link-btn" href="mailto:${USER_EMAIL}">${USER_EMAIL}</a>`;
+        body.innerHTML = `Hope you are doing well if Amy problem please mail us to riyanshusinh@gmail.com <br><br>Have questions or feedback? Mail us at:<br><a class="link-btn" href="mailto:${USER_EMAIL}">${USER_EMAIL}</a>`;
     } else if(type === 'contact') {
         title.innerText = "Contact Us";
         body.innerHTML = `Designed and Developed by <strong>Riyanshu</strong>.<br><br>
