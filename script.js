@@ -7,11 +7,14 @@ const PORTFOLIO_WEBSITE = "https://your-portfolio-website.com";
 
 let peer = null;
 let connections = {};
+let peerUserNames = {};
+let peerPermissions = {};
 let currentMode = '';
 let isHost = false;
 let userName = '';
 let roomCode = '';
 let noticeTimer = null;
+let canIWriteInShareIt = false;
 
 const logLines = [
     { text: "INITIALIZING SECURE MESH SYSTEM...", type: "log-green" },
@@ -35,6 +38,7 @@ function runTerminal() {
     const logBox = document.getElementById('terminal-logs');
     logBox.innerHTML = '';
     document.getElementById('terminal-screen').classList.remove('hidden');
+    document.getElementById('terminal-screen').classList.remove('fade-out-terminal');
     document.getElementById('dashboard-screen').classList.add('hidden');
     document.getElementById('chat-screen').classList.add('hidden');
 
@@ -42,10 +46,15 @@ function runTerminal() {
     function typeNextLine() {
         if (lineIndex >= logLines.length) {
             setTimeout(() => {
-                document.getElementById('terminal-screen').classList.add('hidden');
-                document.getElementById('dashboard-screen').classList.remove('hidden');
-                triggerUnderBuildNotice();
-            }, 1200);
+                const termScreen = document.getElementById('terminal-screen');
+                termScreen.classList.add('fade-out-terminal');
+                setTimeout(() => {
+                    termScreen.classList.add('hidden');
+                    termScreen.classList.remove('fade-out-terminal');
+                    document.getElementById('dashboard-screen').classList.remove('hidden');
+                    triggerUnderBuildNotice();
+                }, 550);
+            }, 1000);
             return;
         }
         const currentLine = logLines[lineIndex];
@@ -62,9 +71,9 @@ function runTerminal() {
             if (charIndex > fullText.length) {
                 clearInterval(timer);
                 lineIndex++;
-                setTimeout(typeNextLine, 650);
+                setTimeout(typeNextLine, 500);
             }
-        }, 35);
+        }, 25);
     }
     typeNextLine();
 }
@@ -126,6 +135,7 @@ function closeModals() {
     document.getElementById('mode-modal').classList.add('hidden');
     document.getElementById('form-modal').classList.add('hidden');
     document.getElementById('info-modal').classList.add('hidden');
+    document.getElementById('permission-modal').classList.add('hidden');
 }
 
 function openInfoModal(type) {
@@ -202,6 +212,7 @@ async function handleCreateRoom() {
     roomCode = inputCode.length === 4 ? inputCode : Math.random().toString(36).substring(2, 6);
     
     isHost = true;
+    canIWriteInShareIt = true;
     await initializePeer(`ss-${currentMode}-${roomCode}`);
     setupChatUI();
 }
@@ -216,6 +227,7 @@ async function handleJoinRoom() {
     }
     
     isHost = false;
+    canIWriteInShareIt = false;
     await initializePeer();
     
     const hostPeerId = `ss-${currentMode}-${roomCode}`;
@@ -223,6 +235,7 @@ async function handleJoinRoom() {
     
     conn.on('open', () => {
         connections[hostPeerId] = conn;
+        peerUserNames[hostPeerId] = 'Host';
         setupConnectionListeners(conn);
         setupChatUI();
     });
@@ -237,9 +250,14 @@ function handleIncomingConnection(conn) {
     
     conn.on('open', () => {
         connections[conn.peer] = conn;
-        setupConnectionListeners(conn);
+        peerUserNames[conn.peer] = remoteUser;
+        peerPermissions[conn.peer] = false;
+        
         broadcastSystemMsg(`${remoteUser} joined the chat`);
         updateUserCount();
+        if(isHost && currentMode === 'shareit') {
+            updatePermissionModalUI();
+        }
     });
 }
 
@@ -252,12 +270,27 @@ function setupConnectionListeners(conn) {
             showCustomAlert("Chat Dissolved", "The session has been wiped by host.", [
                 { text: "OK", class: "neu-primary-btn", onClick: restartSystem }
             ]);
+        } else if(data.type === 'perm_update') {
+            if(!isHost) {
+                canIWriteInShareIt = !!data.allowed;
+                applyInputPermissionState();
+                if(data.allowed) {
+                    renderSystemMsg("Host has granted you chat permissions.");
+                } else {
+                    renderSystemMsg("Host has revoked your chat permissions.");
+                }
+            }
         }
     });
 
     conn.on('close', () => {
         delete connections[conn.peer];
+        delete peerUserNames[conn.peer];
+        delete peerPermissions[conn.peer];
         updateUserCount();
+        if(isHost && currentMode === 'shareit') {
+            updatePermissionModalUI();
+        }
     });
 }
 
@@ -271,14 +304,109 @@ function setupChatUI() {
 
     if(isHost) {
         document.getElementById('dissolve-btn').classList.remove('hidden');
+        if(currentMode === 'shareit') {
+            document.getElementById('permission-btn').classList.remove('hidden');
+        } else {
+            document.getElementById('permission-btn').classList.add('hidden');
+        }
+    } else {
+        document.getElementById('dissolve-btn').classList.add('hidden');
+        document.getElementById('permission-btn').classList.add('hidden');
     }
 
+    applyInputPermissionState();
     renderSystemMsg(`Joined ${currentMode.toUpperCase()} Room as ${userName}. Code: ${roomCode.toUpperCase()}`);
+}
+
+function applyInputPermissionState() {
+    const input = document.getElementById('chat-input');
+    const sendBtn = document.getElementById('send-msg-btn');
+
+    if(currentMode === 'shareit') {
+        if(isHost || canIWriteInShareIt) {
+            input.disabled = false;
+            sendBtn.disabled = false;
+            input.placeholder = "Type a message...";
+        } else {
+            input.disabled = true;
+            sendBtn.disabled = true;
+            input.placeholder = "Only Host/Permitted users can send messages...";
+        }
+    } else {
+        input.disabled = false;
+        sendBtn.disabled = false;
+        input.placeholder = "Type a message...";
+    }
+}
+
+function openPermissionModal() {
+    updatePermissionModalUI();
+    document.getElementById('permission-modal').classList.remove('hidden');
+}
+
+function closePermissionModal() {
+    document.getElementById('permission-modal').classList.add('hidden');
+}
+
+function updatePermissionModalUI() {
+    const list = document.getElementById('user-perm-list');
+    list.innerHTML = '';
+    
+    const peerIds = Object.keys(connections);
+    if(peerIds.length === 0) {
+        list.innerHTML = '<div style="font-size:12px; color:#666; text-align:center; padding:10px;">No users connected yet.</div>';
+        return;
+    }
+
+    let allChecked = true;
+
+    peerIds.forEach(pId => {
+        const uName = peerUserNames[pId] || 'User';
+        const isAllowed = !!peerPermissions[pId];
+        if(!isAllowed) allChecked = false;
+
+        const item = document.createElement('div');
+        item.className = 'user-perm-item';
+        
+        const nameSpan = document.createElement('span');
+        nameSpan.innerText = uName;
+        
+        const chk = document.createElement('input');
+        chk.type = 'checkbox';
+        chk.checked = isAllowed;
+        chk.onchange = (e) => toggleUserPermission(pId, e.target.checked);
+
+        item.appendChild(nameSpan);
+        item.appendChild(chk);
+        list.appendChild(item);
+    });
+
+    document.getElementById('select-all-perm').checked = allChecked;
+}
+
+function toggleUserPermission(peerId, isAllowed) {
+    peerPermissions[peerId] = isAllowed;
+    if(connections[peerId] && connections[peerId].open) {
+        connections[peerId].send({ type: 'perm_update', allowed: isAllowed });
+    }
+    updatePermissionModalUI();
+}
+
+function toggleSelectAllPermissions(isAllowed) {
+    Object.keys(connections).forEach(pId => {
+        peerPermissions[pId] = isAllowed;
+        if(connections[pId] && connections[pId].open) {
+            connections[pId].send({ type: 'perm_update', allowed: isAllowed });
+        }
+    });
+    updatePermissionModalUI();
 }
 
 function handleKeyPress(e) { if(e.key === 'Enter') sendChatMessage(); }
 
 function sendChatMessage() {
+    if(currentMode === 'shareit' && !isHost && !canIWriteInShareIt) return;
+
     const input = document.getElementById('chat-input');
     const text = input.value.trim();
     if(!text) return;
@@ -320,6 +448,7 @@ function renderSystemMsg(text) {
     div.className = 'msg sys-msg fade-item delay-1';
     div.innerText = text;
     box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
 }
 
 function broadcastSystemMsg(text) {
@@ -349,11 +478,15 @@ function executeDissolve() {
 function restartSystem() {
     if(peer) peer.destroy();
     connections = {};
+    peerUserNames = {};
+    peerPermissions = {};
     currentMode = '';
     isHost = false;
     userName = '';
     roomCode = '';
+    canIWriteInShareIt = false;
     document.getElementById('chat-box').innerHTML = '';
     document.getElementById('dissolve-btn').classList.add('hidden');
+    document.getElementById('permission-btn').classList.add('hidden');
     runTerminal();
 }
