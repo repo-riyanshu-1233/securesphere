@@ -1,8 +1,8 @@
 const MAINTENANCE_MODE = true;
 const SHOW_UNDER_BUILD_NOTICE = true;
-const USER_EMAIL = "your-email@example.com";
-const USER_INSTAGRAM = "https://instagram.com/your_username";
-const PORTFOLIO_WEBSITE = "https://your-portfolio-website.com";
+const USER_EMAIL = "riyanshusinh@gmail.com ";
+const USER_INSTAGRAM = "https://instagram.com/riyanshu1233";
+const PORTFOLIO_WEBSITE = "https://riyanshusinhweb.onrender.com";
 
 let peer = null;
 let connections = {};
@@ -16,14 +16,14 @@ let noticeTimer = null;
 let canIWriteInShareIt = false;
 
 const logLines = [
-    { text: "INITIALIZING SECURE MESH SYSTEM...", type: "log-green" },
-    { text: "ALLOCATING VIRTUAL MEMORY SPACES...", type: "log-blue" },
-    { text: "LOADING SHA-256 ENCRYPTION MODULES...", type: "log-blue" },
-    { text: "ESTABLISHING RTC PEER DISCOVERY SOCKETS...", type: "log-yellow" },
-    { text: "VERIFYING P2P PROTOCOLS & HANDSHAKES...", type: "log-yellow" },
-    { text: "CONNECTING TO SIGNALING RELAY SERVER...", type: "log-blue" },
-    { text: "ZERO LOG MEMORY BUFFER LOADED...", type: "log-green" },
-    { text: "SYSTEM ALL REAL-TIME NODES READY.", type: "log-green" }
+    { text: "INITIALIZING SECURE NETWORK SYSTEM...", type: "log-green" },
+    { text: "ALLOCATING PRIVATE E2E ENCRYPTION...", type: "log-blue" },
+    { text: "LOADING ENCRYPTION MODULES...", type: "log-blue" },
+    { text: "ESTABLISHING PRIVATE SERVER...", type: "log-yellow" },
+    { text: "VERIFYING YOUR SYSTEM...", type: "log-yellow" },
+    { text: "CONNECTING TO SECURESPHERE SERVER...", type: "log-blue" },
+    { text: "DEVELOPED BY RIYANSHUSINH.DEV.AI..", type: "log-green" },
+    { text: "SYSTEM ALL NODES READY CONNECTION ESTABLISHED.", type: "log-green" }
 ];
 
 function runTerminal() {
