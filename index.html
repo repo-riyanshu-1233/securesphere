@@ -1,30 +1,127 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureSphere - Private Chat</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="terminal-screen">
-        <div class="log">INITIALIZING SYSTEM...</div>
+    <div id="maintenance-screen" class="hidden">
+        <div class="maint-title">SecureSphere is Under Maintenance</div>
+        <div class="maint-desc">We are currently updating our systems for your better experience. Please wait a while and check back soon. Thank you!</div>
+        <div class="maint-status">Server Status: Updating...</div>
     </div>
 
-    <div id="dashboard-screen" style="display:none;">
-        <h1>SECURESPHERE</h1>
-        <button id="start-btn" class="neu-btn">Start Chatting</button>
+    <div id="terminal-screen" class="hidden">
+        <div class="terminal-header">SECURESPHERE V1.0 - INITIALIZING SYSTEM</div>
+        <div id="terminal-logs" class="terminal-logs"></div>
     </div>
 
-    <div id="chat-screen" style="display:none;">
-        <div class="chat-header">
-            <span>Chat Room</span>
-            <button id="exit-btn">Exit</button>
-            <button id="dissolve-btn" style="color:red;">Dissolve</button>
+    <div id="dashboard-screen" class="hidden">
+        
+        <button class="top-menu-btn fade-item delay-1" onclick="toggleDropdown()">☰</button>
+
+        <div id="dropdown-menu" class="dropdown-menu hidden">
+            <div class="dropdown-item fade-item delay-1" onclick="openInfoModal('about')">About</div>
+            <div class="dropdown-item fade-item delay-2" onclick="openInfoModal('help')">Help</div>
+            <div class="dropdown-item fade-item delay-3" onclick="openInfoModal('contact')">Contact Us</div>
+            <div class="dropdown-item fade-item delay-4" onclick="openOtherProjects()">Other Projects ↗</div>
         </div>
-        <div id="msg-box"></div>
+
+        <div class="brand-container fade-item delay-1">
+            <div class="brand-title">SECURESPHERE</div>
+            <p class="brand-subtitle">Private • Zero Logs • Peer-to-Peer</p>
+        </div>
+
+        <button class="neu-primary-btn fade-item delay-2" onclick="showModeSelection()">Start Chatting</button>
+
+        <div id="under-build-modal" class="modal hidden">
+            <div class="neu-card">
+                <button class="modal-close-icon" onclick="closeNoticeModal()">×</button>
+                <h3 style="color:#d9534f; margin-bottom:8px;" class="fade-item delay-1">Notice: Under Build</h3>
+                <p class="fade-item delay-2" style="font-size:12.5px; color:#444; line-height:1.5; margin-bottom:12px;">
+                    This web app is still in the building process. Some features may be slow or might not work as expected.
+                </p>
+                <p class="fade-item delay-3" style="font-size:12px; color:#666; line-height:1.4;">
+                    If you encounter any bugs or issues, please let us know! Share your thoughts to help upgrade my web app via the <strong>Top Right Menu (☰) → Contact Us</strong> section via Mail or Instagram.
+                </p>
+            </div>
+        </div>
+
+        <div id="mode-modal" class="modal hidden">
+            <div class="neu-card">
+                <h3 class="fade-item delay-1">Select Chat Type</h3>
+                <button class="neu-primary-btn fade-item delay-2" style="border-radius:14px; margin-bottom:10px;" onclick="openRoomForm('group')">Group Chat (Max 10)</button>
+                <button class="neu-secondary-btn fade-item delay-3" style="margin-bottom:10px;" onclick="openRoomForm('private')">Private Room (1-on-1)</button>
+                <button class="neu-secondary-btn fade-item delay-4" onclick="openRoomForm('shareit')">Broadcast Room (Share It)</button>
+                <button class="neu-secondary-btn fade-item delay-5" style="background:transparent; box-shadow:none; margin-top:10px;" onclick="closeModals()">Close</button>
+            </div>
+        </div>
+
+        <div id="form-modal" class="modal hidden">
+            <div class="neu-card">
+                <h3 id="form-title" class="fade-item delay-1">Room Setup</h3>
+                
+                <input type="text" id="user-name-input" placeholder="Enter Your Name" class="neu-input fade-item delay-2">
+                
+                <div class="tab-group fade-item delay-3">
+                    <button class="neu-tab active" id="tab-create" onclick="toggleFormMode('create')">Create Room</button>
+                    <button class="neu-tab" id="tab-join" onclick="toggleFormMode('join')">Join Room</button>
+                </div>
+
+                <div id="create-sec" class="fade-item delay-4">
+                    <input type="text" id="custom-code-input" placeholder="Custom 4-Char Code (Optional)" maxlength="4" class="neu-input">
+                    <button class="neu-primary-btn" style="border-radius:12px; margin-top:10px;" onclick="handleCreateRoom()">Create & Launch</button>
+                </div>
+
+                <div id="join-sec" class="hidden fade-item delay-4">
+                    <input type="text" id="join-code-input" placeholder="Enter 4-Char Room Code" maxlength="4" class="neu-input">
+                    <button class="neu-primary-btn" style="border-radius:12px; margin-top:10px;" onclick="handleJoinRoom()">Join Room</button>
+                </div>
+                
+                <button class="neu-secondary-btn fade-item delay-5" style="background:transparent; box-shadow:none;" onclick="closeModals()">← Back</button>
+            </div>
+        </div>
+
+        <div id="info-modal" class="modal hidden">
+            <div class="neu-card">
+                <button class="modal-close-icon" onclick="closeInfoModal()">×</button>
+                <h3 id="info-title" class="fade-item delay-1">Information</h3>
+                <div id="info-body" class="fade-item delay-2" style="font-size:13px; color:#444; line-height:1.6; margin-bottom:15px;"></div>
+                <button class="neu-secondary-btn fade-item delay-3" onclick="closeInfoModal()">Back</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="chat-screen" class="hidden fade-item delay-1">
+        <div class="chat-header">
+            <div class="header-left">
+                <div class="avatar-circle">S</div>
+                <div>
+                    <div class="header-title" id="header-room-title">SecureSphere</div>
+                    <span id="active-user-count" class="badge">1 User Online</span>
+                </div>
+            </div>
+            <div>
+                <button id="dissolve-btn" class="danger-btn hidden" onclick="promptDissolve()">Dissolve</button>
+                <button class="exit-btn" onclick="restartSystem()">Exit</button>
+            </div>
+        </div>
+        <div id="chat-box" class="chat-box"></div>
         <div class="input-bar">
-            <input type="text" id="msg-input" placeholder="Message...">
-            <button id="send-btn">+</button>
+            <input type="text" id="chat-input" placeholder="Type a message..." class="chat-input" onkeypress="handleKeyPress(event)">
+            <button class="send-btn" onclick="sendChatMessage()">➤</button>
+        </div>
+    </div>
+
+    <div id="custom-alert-modal" class="modal hidden">
+        <div class="alert-box">
+            <div id="alert-title" class="alert-title">Notice</div>
+            <div id="alert-desc" class="alert-desc">Alert message content</div>
+            <div id="alert-actions" class="alert-actions"></div>
         </div>
     </div>
 
