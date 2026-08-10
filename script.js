@@ -1,4 +1,4 @@
-const MAINTENANCE_MODE = true;
+const MAINTENANCE_MODE = false;
 const SHOW_UNDER_BUILD_NOTICE = true;
 const USER_EMAIL = "riyanshusinh@gmail.com ";
 const USER_INSTAGRAM = "https://instagram.com/riyanshu1233";
