@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SecureSphere - Private Chat</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <link rel="stylesheet" href="style.css">
@@ -36,7 +36,9 @@
             <p class="brand-subtitle">Private • Zero Logs • Peer-to-Peer</p>
         </div>
 
-        <button class="neu-primary-btn fade-item delay-2" onclick="showModeSelection()">Start Chatting</button>
+        <div class="bottom-action-container fade-item delay-2">
+            <button class="neu-primary-btn" onclick="showModeSelection()">Start Chatting</button>
+        </div>
 
         <div id="under-build-modal" class="modal hidden">
             <div class="neu-card">
@@ -105,15 +107,29 @@
                     <span id="active-user-count" class="badge">1 User Online</span>
                 </div>
             </div>
-            <div>
+            <div class="header-right">
+                <button id="permission-btn" class="icon-btn hidden" onclick="openPermissionModal()" title="Manage Permissions">+</button>
                 <button id="dissolve-btn" class="danger-btn hidden" onclick="promptDissolve()">Dissolve</button>
                 <button class="exit-btn" onclick="restartSystem()">Exit</button>
             </div>
         </div>
         <div id="chat-box" class="chat-box"></div>
-        <div class="input-bar">
+        <div class="input-bar" id="chat-input-bar">
             <input type="text" id="chat-input" placeholder="Type a message..." class="chat-input" onkeypress="handleKeyPress(event)">
-            <button class="send-btn" onclick="sendChatMessage()">➤</button>
+            <button class="send-btn" id="send-msg-btn" onclick="sendChatMessage()">➤</button>
+        </div>
+    </div>
+
+    <div id="permission-modal" class="modal hidden">
+        <div class="neu-card">
+            <button class="modal-close-icon" onclick="closePermissionModal()">×</button>
+            <h3>Manage Chat Permissions</h3>
+            <div class="perm-select-all-box">
+                <span>Select All Users</span>
+                <input type="checkbox" id="select-all-perm" onchange="toggleSelectAllPermissions(this.checked)">
+            </div>
+            <div id="user-perm-list" class="user-perm-list"></div>
+            <button class="neu-secondary-btn" style="margin-top:15px;" onclick="closePermissionModal()">Done</button>
         </div>
     </div>
 
