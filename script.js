@@ -1,6 +1,5 @@
 const MAINTENANCE_MODE = false;
 const SHOW_UNDER_BUILD_NOTICE = true;
-
 const USER_EMAIL = "your-email@example.com";
 const USER_INSTAGRAM = "https://instagram.com/your_username";
 const PORTFOLIO_WEBSITE = "https://your-portfolio-website.com";
@@ -82,10 +81,7 @@ function triggerUnderBuildNotice() {
     if (SHOW_UNDER_BUILD_NOTICE) {
         const noticeModal = document.getElementById('under-build-modal');
         noticeModal.classList.remove('hidden');
-
-        noticeTimer = setTimeout(() => {
-            closeNoticeModal();
-        }, 10000);
+        noticeTimer = setTimeout(() => { closeNoticeModal(); }, 10000);
     }
 }
 
@@ -96,10 +92,7 @@ function closeNoticeModal() {
 
 window.onload = runTerminal;
 
-function toggleDropdown() {
-    const menu = document.getElementById('dropdown-menu');
-    menu.classList.toggle('hidden');
-}
+function toggleDropdown() { document.getElementById('dropdown-menu').classList.toggle('hidden'); }
 
 function showModeSelection() {
     document.getElementById('mode-modal').classList.remove('hidden');
@@ -193,9 +186,7 @@ function showCustomAlert(title, message, buttons = []) {
     modal.classList.remove('hidden');
 }
 
-function closeCustomAlert() {
-    document.getElementById('custom-alert-modal').classList.add('hidden');
-}
+function closeCustomAlert() { document.getElementById('custom-alert-modal').classList.add('hidden'); }
 
 function initializePeer(customId = null) {
     return new Promise((resolve) => {
@@ -208,9 +199,7 @@ function initializePeer(customId = null) {
 async function handleCreateRoom() {
     userName = document.getElementById('user-name-input').value.trim() || 'Host';
     const inputCode = document.getElementById('custom-code-input').value.trim().toLowerCase();
-    
     roomCode = inputCode.length === 4 ? inputCode : Math.random().toString(36).substring(2, 6);
-    
     isHost = true;
     canIWriteInShareIt = true;
     await initializePeer(`ss-${currentMode}-${roomCode}`);
@@ -220,44 +209,33 @@ async function handleCreateRoom() {
 async function handleJoinRoom() {
     userName = document.getElementById('user-name-input').value.trim() || 'Guest';
     roomCode = document.getElementById('join-code-input').value.trim().toLowerCase();
-    
     if(!roomCode || roomCode.length !== 4) {
         showCustomAlert("Invalid Code", "Please enter a valid 4-character Room Code.");
         return;
     }
-    
     isHost = false;
     canIWriteInShareIt = false;
     await initializePeer();
-    
     const hostPeerId = `ss-${currentMode}-${roomCode}`;
     const conn = peer.connect(hostPeerId, { metadata: { userName } });
-    
     conn.on('open', () => {
         connections[hostPeerId] = conn;
         peerUserNames[hostPeerId] = 'Host';
         setupConnectionListeners(conn);
         setupChatUI();
     });
-
-    conn.on('error', () => {
-        showCustomAlert("Connection Failed", "Room code not found or session closed.");
-    });
+    conn.on('error', () => { showCustomAlert("Connection Failed", "Room code not found or session closed."); });
 }
 
 function handleIncomingConnection(conn) {
     const remoteUser = conn.metadata ? conn.metadata.userName : 'Peer';
-    
     conn.on('open', () => {
         connections[conn.peer] = conn;
         peerUserNames[conn.peer] = remoteUser;
         peerPermissions[conn.peer] = false;
-        
         broadcastSystemMsg(`${remoteUser} joined the chat`);
         updateUserCount();
-        if(isHost && currentMode === 'shareit') {
-            updatePermissionModalUI();
-        }
+        if(isHost && currentMode === 'shareit') updatePermissionModalUI();
     });
 }
 
@@ -274,23 +252,16 @@ function setupConnectionListeners(conn) {
             if(!isHost) {
                 canIWriteInShareIt = !!data.allowed;
                 applyInputPermissionState();
-                if(data.allowed) {
-                    renderSystemMsg("Host has granted you chat permissions.");
-                } else {
-                    renderSystemMsg("Host has revoked your chat permissions.");
-                }
+                renderSystemMsg(data.allowed ? "Host has granted you chat permissions." : "Host has revoked your chat permissions.");
             }
         }
     });
-
     conn.on('close', () => {
         delete connections[conn.peer];
         delete peerUserNames[conn.peer];
         delete peerPermissions[conn.peer];
         updateUserCount();
-        if(isHost && currentMode === 'shareit') {
-            updatePermissionModalUI();
-        }
+        if(isHost && currentMode === 'shareit') updatePermissionModalUI();
     });
 }
 
@@ -298,22 +269,16 @@ function setupChatUI() {
     document.getElementById('dashboard-screen').classList.add('hidden');
     document.getElementById('form-modal').classList.add('hidden');
     document.getElementById('chat-screen').classList.remove('hidden');
-
     document.getElementById('header-room-title').innerText = `Code: ${roomCode.toUpperCase()}`;
     updateUserCount();
-
     if(isHost) {
         document.getElementById('dissolve-btn').classList.remove('hidden');
-        if(currentMode === 'shareit') {
-            document.getElementById('permission-btn').classList.remove('hidden');
-        } else {
-            document.getElementById('permission-btn').classList.add('hidden');
-        }
+        if(currentMode === 'shareit') document.getElementById('permission-btn').classList.remove('hidden');
+        else document.getElementById('permission-btn').classList.add('hidden');
     } else {
         document.getElementById('dissolve-btn').classList.add('hidden');
         document.getElementById('permission-btn').classList.add('hidden');
     }
-
     applyInputPermissionState();
     renderSystemMsg(`Joined ${currentMode.toUpperCase()} Room as ${userName}. Code: ${roomCode.toUpperCase()}`);
 }
@@ -321,7 +286,6 @@ function setupChatUI() {
 function applyInputPermissionState() {
     const input = document.getElementById('chat-input');
     const sendBtn = document.getElementById('send-msg-btn');
-
     if(currentMode === 'shareit') {
         if(isHost || canIWriteInShareIt) {
             input.disabled = false;
@@ -344,60 +308,46 @@ function openPermissionModal() {
     document.getElementById('permission-modal').classList.remove('hidden');
 }
 
-function closePermissionModal() {
-    document.getElementById('permission-modal').classList.add('hidden');
-}
+function closePermissionModal() { document.getElementById('permission-modal').classList.add('hidden'); }
 
 function updatePermissionModalUI() {
     const list = document.getElementById('user-perm-list');
     list.innerHTML = '';
-    
     const peerIds = Object.keys(connections);
     if(peerIds.length === 0) {
         list.innerHTML = '<div style="font-size:12px; color:#666; text-align:center; padding:10px;">No users connected yet.</div>';
         return;
     }
-
     let allChecked = true;
-
     peerIds.forEach(pId => {
         const uName = peerUserNames[pId] || 'User';
         const isAllowed = !!peerPermissions[pId];
         if(!isAllowed) allChecked = false;
-
         const item = document.createElement('div');
         item.className = 'user-perm-item';
-        
         const nameSpan = document.createElement('span');
         nameSpan.innerText = uName;
-        
         const chk = document.createElement('input');
         chk.type = 'checkbox';
         chk.checked = isAllowed;
         chk.onchange = (e) => toggleUserPermission(pId, e.target.checked);
-
         item.appendChild(nameSpan);
         item.appendChild(chk);
         list.appendChild(item);
     });
-
     document.getElementById('select-all-perm').checked = allChecked;
 }
 
 function toggleUserPermission(peerId, isAllowed) {
     peerPermissions[peerId] = isAllowed;
-    if(connections[peerId] && connections[peerId].open) {
-        connections[peerId].send({ type: 'perm_update', allowed: isAllowed });
-    }
+    if(connections[peerId] && connections[peerId].open) connections[peerId].send({ type: 'perm_update', allowed: isAllowed });
     updatePermissionModalUI();
 }
 
 function toggleSelectAllPermissions(isAllowed) {
     Object.keys(connections).forEach(pId => {
         peerPermissions[pId] = isAllowed;
-        if(connections[pId] && connections[pId].open) {
-            connections[pId].send({ type: 'perm_update', allowed: isAllowed });
-        }
+        if(connections[pId] && connections[pId].open) connections[pId].send({ type: 'perm_update', allowed: isAllowed });
     });
     updatePermissionModalUI();
 }
@@ -406,39 +356,37 @@ function handleKeyPress(e) { if(e.key === 'Enter') sendChatMessage(); }
 
 function sendChatMessage() {
     if(currentMode === 'shareit' && !isHost && !canIWriteInShareIt) return;
-
     const input = document.getElementById('chat-input');
     const text = input.value.trim();
     if(!text) return;
-
     const payload = { type: 'chat', sender: userName, text };
-    renderMessage('Me', text, true);
+    renderMessage(userName, text, true);
     broadcastData(payload);
     input.value = '';
 }
 
 function broadcastData(data, excludePeerId = null) {
     Object.keys(connections).forEach(peerId => {
-        if(peerId !== excludePeerId && connections[peerId].open) {
-            connections[peerId].send(data);
-        }
+        if(peerId !== excludePeerId && connections[peerId].open) connections[peerId].send(data);
     });
 }
 
 function renderMessage(sender, text, isMe) {
     const box = document.getElementById('chat-box');
-    const msgEl = document.createElement('div');
-    msgEl.className = `msg ${isMe ? 'my-msg' : 'peer-msg'} fade-item delay-1`;
-    
-    if(!isMe) {
-        const senderDiv = document.createElement('div');
-        senderDiv.className = 'msg-sender';
-        senderDiv.innerText = sender;
-        msgEl.appendChild(senderDiv);
-    }
+    const container = document.createElement('div');
+    container.className = `msg-container ${isMe ? 'my-msg' : 'peer-msg'}`;
 
-    msgEl.appendChild(document.createTextNode(text));
-    box.appendChild(msgEl);
+    const nameDiv = document.createElement('div');
+    nameDiv.className = 'msg-sender';
+    nameDiv.innerText = isMe ? 'Me' : sender;
+
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble';
+    bubble.innerText = text;
+
+    container.appendChild(nameDiv);
+    container.appendChild(bubble);
+    box.appendChild(container);
     box.scrollTop = box.scrollHeight;
 }
 
@@ -470,9 +418,7 @@ function promptDissolve() {
 
 function executeDissolve() {
     broadcastData({ type: 'dissolve' });
-    setTimeout(() => {
-        restartSystem();
-    }, 300);
+    setTimeout(() => { restartSystem(); }, 300);
 }
 
 function restartSystem() {
@@ -485,11 +431,9 @@ function restartSystem() {
     userName = '';
     roomCode = '';
     canIWriteInShareIt = false;
-    
     document.getElementById('chat-box').innerHTML = '';
     document.getElementById('dissolve-btn').classList.add('hidden');
     document.getElementById('permission-btn').classList.add('hidden');
-    
     document.getElementById('chat-screen').classList.add('hidden');
     document.getElementById('dashboard-screen').classList.remove('hidden');
 }
