@@ -1,4 +1,4 @@
-const MAINTENANCE_MODE = false;
+const MAINTENANCE_MODE = true;
 const SHOW_UNDER_BUILD_NOTICE = true;
 const USER_EMAIL = "your-email@example.com";
 const USER_INSTAGRAM = "https://instagram.com/your_username";
