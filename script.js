@@ -80,14 +80,17 @@ function runTerminal() {
 function triggerUnderBuildNotice() {
     if (SHOW_UNDER_BUILD_NOTICE) {
         const noticeModal = document.getElementById('under-build-modal');
-        noticeModal.classList.remove('hidden');
-        noticeTimer = setTimeout(() => { closeNoticeModal(); }, 10000);
+        if(noticeModal) {
+            noticeModal.classList.remove('hidden');
+            noticeTimer = setTimeout(() => { closeNoticeModal(); }, 10000);
+        }
     }
 }
 
 function closeNoticeModal() {
     if(noticeTimer) clearTimeout(noticeTimer);
-    document.getElementById('under-build-modal').classList.add('hidden');
+    const noticeModal = document.getElementById('under-build-modal');
+    if(noticeModal) noticeModal.classList.add('hidden');
 }
 
 window.onload = runTerminal;
@@ -218,21 +221,27 @@ async function handleJoinRoom() {
     await initializePeer();
     const hostPeerId = `ss-${currentMode}-${roomCode}`;
     const conn = peer.connect(hostPeerId, { metadata: { userName } });
+    
     conn.on('open', () => {
         connections[hostPeerId] = conn;
         peerUserNames[hostPeerId] = 'Host';
         setupConnectionListeners(conn);
         setupChatUI();
     });
+    
     conn.on('error', () => { showCustomAlert("Connection Failed", "Room code not found or session closed."); });
 }
 
 function handleIncomingConnection(conn) {
-    const remoteUser = conn.metadata ? conn.metadata.userName : 'Peer';
+    const remoteUser = (conn.metadata && conn.metadata.userName) ? conn.metadata.userName : 'Peer';
     conn.on('open', () => {
         connections[conn.peer] = conn;
         peerUserNames[conn.peer] = remoteUser;
-        peerPermissions[conn.peer] = false;
+        peerPermissions[conn.peer] = (currentMode !== 'shareit'); // Auto-allow if not ShareIt mode
+        
+        setupConnectionListeners(conn);
+        
+        // Broadcast joined message to all peers & render locally
         broadcastSystemMsg(`${remoteUser} joined the chat`);
         updateUserCount();
         if(isHost && currentMode === 'shareit') updatePermissionModalUI();
@@ -242,7 +251,12 @@ function handleIncomingConnection(conn) {
 function setupConnectionListeners(conn) {
     conn.on('data', (data) => {
         if(data.type === 'chat') {
+            // FIX: Render message on current device when received
             renderMessage(data.sender, data.text, false);
+            // If host, forward message to other connected clients
+            if(isHost) broadcastData(data, conn.peer);
+        } else if(data.type === 'sys_msg') {
+            renderSystemMsg(data.text);
             if(isHost) broadcastData(data, conn.peer);
         } else if(data.type === 'dissolve') {
             showCustomAlert("Chat Dissolved", "The session has been wiped by host.", [
@@ -256,10 +270,14 @@ function setupConnectionListeners(conn) {
             }
         }
     });
+    
     conn.on('close', () => {
+        const leavingUser = peerUserNames[conn.peer] || 'User';
         delete connections[conn.peer];
         delete peerUserNames[conn.peer];
         delete peerPermissions[conn.peer];
+        
+        renderSystemMsg(`${leavingUser} left the chat`);
         updateUserCount();
         if(isHost && currentMode === 'shareit') updatePermissionModalUI();
     });
@@ -271,6 +289,7 @@ function setupChatUI() {
     document.getElementById('chat-screen').classList.remove('hidden');
     document.getElementById('header-room-title').innerText = `Code: ${roomCode.toUpperCase()}`;
     updateUserCount();
+    
     if(isHost) {
         document.getElementById('dissolve-btn').classList.remove('hidden');
         if(currentMode === 'shareit') document.getElementById('permission-btn').classList.remove('hidden');
@@ -286,6 +305,9 @@ function setupChatUI() {
 function applyInputPermissionState() {
     const input = document.getElementById('chat-input');
     const sendBtn = document.getElementById('send-msg-btn');
+    
+    if(!input || !sendBtn) return;
+    
     if(currentMode === 'shareit') {
         if(isHost || canIWriteInShareIt) {
             input.disabled = false;
@@ -312,6 +334,7 @@ function closePermissionModal() { document.getElementById('permission-modal').cl
 
 function updatePermissionModalUI() {
     const list = document.getElementById('user-perm-list');
+    if(!list) return;
     list.innerHTML = '';
     const peerIds = Object.keys(connections);
     if(peerIds.length === 0) {
@@ -335,7 +358,8 @@ function updatePermissionModalUI() {
         item.appendChild(chk);
         list.appendChild(item);
     });
-    document.getElementById('select-all-perm').checked = allChecked;
+    const selectAll = document.getElementById('select-all-perm');
+    if(selectAll) selectAll.checked = allChecked;
 }
 
 function toggleUserPermission(peerId, isAllowed) {
@@ -359,20 +383,30 @@ function sendChatMessage() {
     const input = document.getElementById('chat-input');
     const text = input.value.trim();
     if(!text) return;
+    
     const payload = { type: 'chat', sender: userName, text };
+    
+    // Apne screen par message render karo
     renderMessage(userName, text, true);
+    
+    // Sabhi connected clients/host ko bhejo
     broadcastData(payload);
+    
     input.value = '';
 }
 
 function broadcastData(data, excludePeerId = null) {
     Object.keys(connections).forEach(peerId => {
-        if(peerId !== excludePeerId && connections[peerId].open) connections[peerId].send(data);
+        if(peerId !== excludePeerId && connections[peerId] && connections[peerId].open) {
+            connections[peerId].send(data);
+        }
     });
 }
 
 function renderMessage(sender, text, isMe) {
     const box = document.getElementById('chat-box');
+    if(!box) return;
+    
     const container = document.createElement('div');
     container.className = `msg-container ${isMe ? 'my-msg' : 'peer-msg'}`;
 
@@ -390,23 +424,28 @@ function renderMessage(sender, text, isMe) {
     box.scrollTop = box.scrollHeight;
 }
 
+// FIX: Small system notification (like 'username joined') centered in chat
 function renderSystemMsg(text) {
     const box = document.getElementById('chat-box');
+    if(!box) return;
+    
     const div = document.createElement('div');
-    div.className = 'msg sys-msg fade-item delay-1';
+    div.className = 'sys-msg';
     div.innerText = text;
+    
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
 }
 
 function broadcastSystemMsg(text) {
     renderSystemMsg(text);
-    broadcastData({ type: 'chat', sender: 'SYSTEM', text });
+    broadcastData({ type: 'sys_msg', text });
 }
 
 function updateUserCount() {
     const count = Object.keys(connections).length + 1;
-    document.getElementById('active-user-count').innerText = `${count} User${count > 1 ? 's' : ''} Online`;
+    const countEl = document.getElementById('active-user-count');
+    if(countEl) countEl.innerText = `${count} User${count > 1 ? 's' : ''} Online`;
 }
 
 function promptDissolve() {
@@ -431,7 +470,10 @@ function restartSystem() {
     userName = '';
     roomCode = '';
     canIWriteInShareIt = false;
-    document.getElementById('chat-box').innerHTML = '';
+    
+    const chatBox = document.getElementById('chat-box');
+    if(chatBox) chatBox.innerHTML = '';
+    
     document.getElementById('dissolve-btn').classList.add('hidden');
     document.getElementById('permission-btn').classList.add('hidden');
     document.getElementById('chat-screen').classList.add('hidden');
