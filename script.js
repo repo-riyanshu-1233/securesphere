@@ -71,7 +71,7 @@ function runTerminal() {
             if (charIndex > fullText.length) {
                 clearInterval(timer);
                 lineIndex++;
-                setTimeout(typeNextLine, 500);
+                setTimeout(typeNextLine, 25);
             }
         }, 25);
     }
@@ -485,8 +485,11 @@ function restartSystem() {
     userName = '';
     roomCode = '';
     canIWriteInShareIt = false;
+    
     document.getElementById('chat-box').innerHTML = '';
     document.getElementById('dissolve-btn').classList.add('hidden');
     document.getElementById('permission-btn').classList.add('hidden');
-    runTerminal();
+    
+    document.getElementById('chat-screen').classList.add('hidden');
+    document.getElementById('dashboard-screen').classList.remove('hidden');
 }
