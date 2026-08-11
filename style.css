@@ -76,7 +76,7 @@ html, body { height: 100%; height: 100dvh; background: var(--bg-deep-black); col
     to { opacity: 0; }
 }
 
-/* Dashboard Section */
+
 #dashboard-screen { 
     height: 100vh; 
     height: 100dvh;
@@ -112,7 +112,7 @@ html, body { height: 100%; height: 100dvh; background: var(--bg-deep-black); col
     z-index: 1;
 }
 
-/* Fix Menu Button Positioning */
+
 .top-menu-btn {
     position: absolute;
     top: 24px;
@@ -226,7 +226,7 @@ html, body { height: 100%; height: 100dvh; background: var(--bg-deep-black); col
     box-shadow: inset 2px 2px 5px rgba(255,255,255,0.2), inset -2px -2px 5px rgba(0,0,0,0.8);
 }
 
-/* Modal Overlay Fix - Global Centering */
+
 .modal { 
     position: fixed; 
     top: 0;
@@ -277,7 +277,7 @@ html, body { height: 100%; height: 100dvh; background: var(--bg-deep-black); col
 }
 .neu-input:focus { border-color: var(--accent-teal); }
 
-/* Chat Screen */
+
 #chat-screen { height: 100vh; height: 100dvh; display: flex; flex-direction: column; background: #0c0d10; position: relative; }
 .chat-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; background: rgba(20, 21, 26, 0.85); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.08); z-index: 10; }
 .header-left { display: flex; align-items: center; gap: 12px; }
@@ -297,7 +297,7 @@ html, body { height: 100%; height: 100dvh; background: var(--bg-deep-black); col
     flex-direction: column; 
     gap: 10px; 
     min-height: 0;
-    background: linear-gradient(135deg, rgba(8, 20, 32, 0.85), rgba(15, 30, 45, 0.9)), url('static/images/chat-bg.jpg');
+    background: linear-gradient(135deg, rgba(8, 20, 32, 0.85), rgba(15, 30, 45, 0.9)), url('static/images/wallpaper.jpg');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
