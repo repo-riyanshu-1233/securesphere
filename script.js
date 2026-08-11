@@ -1,6 +1,6 @@
 const MAINTENANCE_MODE = false;
 const SHOW_UNDER_BUILD_NOTICE = true;
-const SHOW_INTRO_VIDEO = true; // Control Intro Video toggle (true / false)
+const SHOW_INTRO_VIDEO = true; 
 const USER_EMAIL = "riyanshusinh@gmail.com ";
 const USER_INSTAGRAM = "https://instagram.com/riyanshu1233";
 const PORTFOLIO_WEBSITE = "https://riyanshusinhweb.onrender.com";
@@ -16,10 +16,9 @@ let roomCode = '';
 let noticeTimer = null;
 let canIWriteInShareIt = false;
 
-// New Helper variables for Typing & Reply Context
 let typingTimeout = null;
-let selectedMsgData = null; // { sender, text }
-let activeReplyData = null;  // { sender, text }
+let selectedMsgData = null; 
+let activeReplyData = null;  
 
 const logLines = [
     { text: "INITIALIZING SECURE NETWORK SYSTEM...", type: "log-green" },
@@ -31,6 +30,13 @@ const logLines = [
     { text: "DEVELOPED BY RIYANSHUSINH.DEV.AI..", type: "log-green" },
     { text: "SYSTEM ALL NODES READY CONNECTION ESTABLISHED.", type: "log-green" }
 ];
+
+function scrollToExactBottom() {
+    const box = document.getElementById('chat-box');
+    if (box) {
+        box.scrollTop = box.scrollHeight;
+    }
+}
 
 function runTerminal() {
     if (MAINTENANCE_MODE) {
@@ -57,7 +63,6 @@ function runTerminal() {
                     termScreen.classList.add('hidden');
                     termScreen.classList.remove('fade-out-terminal');
                     
-                    // After Terminal -> Trigger Intro Video flow
                     if(SHOW_INTRO_VIDEO) {
                         startIntroVideo();
                     } else {
@@ -100,11 +105,9 @@ function startIntroVideo() {
     introScreen.classList.remove('hidden');
     introScreen.classList.add('fade-in');
     
-    // Play with audio
     video.muted = false;
     video.currentTime = 0;
     video.play().catch(() => {
-        // Fallback if browser blocks auto-play audio
         video.muted = true;
         video.play();
     });
@@ -153,7 +156,22 @@ function closeNoticeModal() {
 
 window.onload = runTerminal;
 
-// Global Click listener to dismiss Keyboard & Context Menu on outside tap
+document.addEventListener('DOMContentLoaded', () => {
+    const chatInput = document.getElementById('chat-input');
+    if (chatInput) {
+        chatInput.addEventListener('focus', () => {
+            setTimeout(scrollToExactBottom, 100);
+            setTimeout(scrollToExactBottom, 300);
+        });
+    }
+});
+
+if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', () => {
+        scrollToExactBottom();
+    });
+}
+
 document.addEventListener('click', (e) => {
     hideContextMenu();
     const dropdown = document.getElementById('dropdown-menu');
@@ -161,7 +179,6 @@ document.addEventListener('click', (e) => {
         dropdown.classList.add('hidden');
     }
 
-    // Blur Keyboard if clicking on chat empty space or background
     const chatInput = document.getElementById('chat-input');
     const isClickInsideInput = e.target.closest('#chat-input-bar') || e.target.closest('.send-btn');
     const isClickInsideContext = e.target.closest('#msg-context-menu');
@@ -211,6 +228,7 @@ function closeModals() {
     document.getElementById('form-modal').classList.add('hidden');
     document.getElementById('info-modal').classList.add('hidden');
     document.getElementById('permission-modal').classList.add('hidden');
+    document.getElementById('contributors-modal').classList.add('hidden');
 }
 
 function openInfoModal(type) {
@@ -233,6 +251,15 @@ function openInfoModal(type) {
         📧 Email: <a class="link-btn" href="mailto:${USER_EMAIL}">${USER_EMAIL}</a><br><br>
         📸 Instagram: <a class="link-btn" href="${USER_INSTAGRAM}" target="_blank">View Profile ↗</a>`;
     }
+}
+
+function openContributorsModal() {
+    document.getElementById('dropdown-menu').classList.add('hidden');
+    document.getElementById('contributors-modal').classList.remove('hidden');
+}
+
+function closeContributorsModal() {
+    document.getElementById('contributors-modal').classList.add('hidden');
 }
 
 function openOtherProjects() {
@@ -316,7 +343,7 @@ function handleIncomingConnection(conn) {
     conn.on('open', () => {
         connections[conn.peer] = conn;
         peerUserNames[conn.peer] = remoteUser;
-        peerPermissions[conn.peer] = (currentMode !== 'shareit'); // Auto-allow if not ShareIt mode
+        peerPermissions[conn.peer] = (currentMode !== 'shareit'); 
         
         setupConnectionListeners(conn);
         
@@ -379,6 +406,7 @@ function setupChatUI() {
     }
     applyInputPermissionState();
     renderSystemMsg(`Joined ${currentMode.toUpperCase()} Room as ${userName}. Code: ${roomCode.toUpperCase()}`);
+    scrollToExactBottom();
 }
 
 function applyInputPermissionState() {
@@ -474,6 +502,7 @@ function handleRemoteTyping(sender, isTyping) {
     } else {
         el.classList.add('hidden');
     }
+    scrollToExactBottom();
 }
 
 function sendChatMessage() {
@@ -495,7 +524,6 @@ function sendChatMessage() {
     input.value = '';
     cancelReply();
     
-    // Key fix: Keep focus on input so keyboard stays open!
     input.focus();
 }
 
@@ -521,7 +549,6 @@ function renderMessage(sender, text, isMe, replyTo = null) {
     const bubble = document.createElement('div');
     bubble.className = 'msg-bubble';
 
-    // If message is a Reply to another message
     if(replyTo) {
         const quoteBox = document.createElement('div');
         quoteBox.className = 'msg-reply-quote';
@@ -546,18 +573,13 @@ function renderMessage(sender, text, isMe, replyTo = null) {
     container.appendChild(nameDiv);
     container.appendChild(bubble);
 
-    // Tap / Long-press event to open Copy/Reply Menu
     container.addEventListener('click', (e) => {
         e.stopPropagation();
         showContextMenu(e.clientX, e.clientY, { sender: isMe ? 'Me' : sender, text });
     });
 
     box.appendChild(container);
-    
-    // Auto-scroll to bottom like WhatsApp
-    setTimeout(() => {
-        box.scrollTop = box.scrollHeight;
-    }, 50);
+    scrollToExactBottom();
 }
 
 function showContextMenu(x, y, msgData) {
@@ -610,7 +632,7 @@ function renderSystemMsg(text) {
     div.innerText = text;
     
     box.appendChild(div);
-    box.scrollTop = box.scrollHeight;
+    scrollToExactBottom();
 }
 
 function broadcastSystemMsg(text) {
