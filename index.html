@@ -23,7 +23,6 @@
         <div id="terminal-logs" class="terminal-logs"></div>
     </div>
 
-    <!-- Intro Video Screen -->
     <div id="intro-screen" class="hidden">
         <button class="skip-intro-btn" onclick="skipIntroVideo()">×</button>
         <video id="intro-video" playsinline preload="auto">
@@ -43,7 +42,8 @@
             <div class="dropdown-item fade-item delay-1" onclick="openInfoModal('about')">About</div>
             <div class="dropdown-item fade-item delay-2" onclick="openInfoModal('help')">Help</div>
             <div class="dropdown-item fade-item delay-3" onclick="openInfoModal('contact')">Contact Us</div>
-            <div class="dropdown-item fade-item delay-4" onclick="openOtherProjects()">Other Projects ↗</div>
+            <div class="dropdown-item fade-item delay-4" onclick="openContributorsModal()">Our Contributors</div>
+            <div class="dropdown-item fade-item delay-5" onclick="openOtherProjects()">Other Projects ↗</div>
         </div>
 
         <div class="brand-container fade-item delay-1">
@@ -110,6 +110,21 @@
             <h3 id="info-title" class="fade-item delay-1">Information</h3>
             <div id="info-body" class="fade-item delay-2" style="font-size:13px; color:#444; line-height:1.6; margin-bottom:15px;"></div>
             <button class="neu-secondary-btn fade-item delay-3" onclick="closeInfoModal()">Back</button>
+        </div>
+    </div>
+
+    <div id="contributors-modal" class="modal hidden">
+        <div class="neu-card" style="max-height:80vh; overflow-y:auto;">
+            <button class="modal-close-icon" onclick="closeContributorsModal()">×</button>
+            <h3 class="fade-item delay-1" style="text-align:center;">Our Contributors</h3>
+            <div class="contributors-list fade-item delay-2">
+                <div class="contributor-item">
+                    <span>1. Ansh Rajput</span>
+                    <a href="https://github.com" target="_blank" class="link-btn">Profile URL ↗</a>
+                </div>
+                <div class="contributor-item"><span>2. Contributor Name</span><a href="#" class="link-btn">Profile ↗</a></div>
+            </div>
+            <button class="neu-secondary-btn fade-item delay-3" onclick="closeContributorsModal()" style="margin-top:15px;">Back</button>
         </div>
     </div>
 
