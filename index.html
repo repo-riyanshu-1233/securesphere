@@ -23,15 +23,21 @@
         <div id="terminal-logs" class="terminal-logs"></div>
     </div>
 
-    
+    <!-- Intro Video Screen -->
+    <div id="intro-screen" class="hidden">
+        <button class="skip-intro-btn" onclick="skipIntroVideo()">×</button>
+        <video id="intro-video" playsinline preload="auto">
+            <source src="static/videos/intro.mp4" type="video/mp4">
+        </video>
+    </div>
+
     <div id="dashboard-screen" class="hidden">
-      
         <video autoplay loop muted playsinline class="bg-video">
             <source src="static/videos/dashbg.mp4" type="video/mp4">
         </video>
         <div class="video-overlay"></div>
         
-        <button class="top-menu-btn fade-item delay-1" onclick="toggleDropdown()">☰</button>
+        <button class="top-menu-btn fade-item delay-1" onclick="toggleDropdown(event)">☰</button>
 
         <div id="dropdown-menu" class="dropdown-menu hidden">
             <div class="dropdown-item fade-item delay-1" onclick="openInfoModal('about')">About</div>
@@ -50,7 +56,6 @@
         </div>
     </div>
 
-   
     <div id="under-build-modal" class="modal hidden">
         <div class="neu-card">
             <button class="modal-close-icon" onclick="closeNoticeModal()">×</button>
@@ -108,7 +113,6 @@
         </div>
     </div>
 
-   
     <div id="chat-screen" class="hidden fade-item delay-1">
         <div class="chat-header">
             <div class="header-left">
@@ -124,11 +128,28 @@
                 <button class="exit-btn" onclick="restartSystem()">Exit</button>
             </div>
         </div>
+
         <div id="chat-box" class="chat-box"></div>
+
+        <div id="typing-indicator" class="typing-indicator hidden"></div>
+
+        <div id="reply-preview-container" class="reply-preview-container hidden">
+            <div class="reply-content">
+                <div class="reply-sender" id="reply-sender-name">User</div>
+                <div class="reply-text" id="reply-preview-text">Sample text</div>
+            </div>
+            <button class="reply-close-btn" onclick="cancelReply()">×</button>
+        </div>
+
         <div class="input-bar" id="chat-input-bar">
-            <input type="text" id="chat-input" placeholder="Type a message..." class="chat-input" onkeypress="handleKeyPress(event)">
+            <input type="text" id="chat-input" placeholder="Type a message..." class="chat-input" onkeypress="handleKeyPress(event)" oninput="handleTypingInput()">
             <button class="send-btn" id="send-msg-btn" onclick="sendChatMessage()">➤</button>
         </div>
+    </div>
+
+    <div id="msg-context-menu" class="msg-context-menu hidden">
+        <div class="context-item" onclick="handleContextCopy()">Copy</div>
+        <div class="context-item" onclick="handleContextReply()">Reply</div>
     </div>
 
     <div id="permission-modal" class="modal hidden">
