@@ -1,5 +1,6 @@
 const MAINTENANCE_MODE = false;
 const SHOW_UNDER_BUILD_NOTICE = true;
+const SHOW_INTRO_VIDEO = true; // Control Intro Video toggle (true / false)
 const USER_EMAIL = "riyanshusinh@gmail.com ";
 const USER_INSTAGRAM = "https://instagram.com/riyanshu1233";
 const PORTFOLIO_WEBSITE = "https://riyanshusinhweb.onrender.com";
@@ -14,6 +15,11 @@ let userName = '';
 let roomCode = '';
 let noticeTimer = null;
 let canIWriteInShareIt = false;
+
+// New Helper variables for Typing & Reply Context
+let typingTimeout = null;
+let selectedMsgData = null; // { sender, text }
+let activeReplyData = null;  // { sender, text }
 
 const logLines = [
     { text: "INITIALIZING SECURE NETWORK SYSTEM...", type: "log-green" },
@@ -50,8 +56,14 @@ function runTerminal() {
                 setTimeout(() => {
                     termScreen.classList.add('hidden');
                     termScreen.classList.remove('fade-out-terminal');
-                    document.getElementById('dashboard-screen').classList.remove('hidden');
-                    triggerUnderBuildNotice();
+                    
+                    // After Terminal -> Trigger Intro Video flow
+                    if(SHOW_INTRO_VIDEO) {
+                        startIntroVideo();
+                    } else {
+                        document.getElementById('dashboard-screen').classList.remove('hidden');
+                        triggerUnderBuildNotice();
+                    }
                 }, 550);
             }, 1000);
             return;
@@ -77,6 +89,52 @@ function runTerminal() {
     typeNextLine();
 }
 
+function startIntroVideo() {
+    const introScreen = document.getElementById('intro-screen');
+    const video = document.getElementById('intro-video');
+    if(!introScreen || !video) {
+        finishIntroVideo();
+        return;
+    }
+
+    introScreen.classList.remove('hidden');
+    introScreen.classList.add('fade-in');
+    
+    // Play with audio
+    video.muted = false;
+    video.currentTime = 0;
+    video.play().catch(() => {
+        // Fallback if browser blocks auto-play audio
+        video.muted = true;
+        video.play();
+    });
+
+    video.onended = () => {
+        finishIntroVideo();
+    };
+}
+
+function skipIntroVideo() {
+    const video = document.getElementById('intro-video');
+    if(video) video.pause();
+    finishIntroVideo();
+}
+
+function finishIntroVideo() {
+    const introScreen = document.getElementById('intro-screen');
+    if(!introScreen) return;
+    
+    introScreen.classList.remove('fade-in');
+    introScreen.classList.add('fade-out');
+    
+    setTimeout(() => {
+        introScreen.classList.add('hidden');
+        introScreen.classList.remove('fade-out');
+        document.getElementById('dashboard-screen').classList.remove('hidden');
+        triggerUnderBuildNotice();
+    }, 600);
+}
+
 function triggerUnderBuildNotice() {
     if (SHOW_UNDER_BUILD_NOTICE) {
         const noticeModal = document.getElementById('under-build-modal');
@@ -95,7 +153,28 @@ function closeNoticeModal() {
 
 window.onload = runTerminal;
 
-function toggleDropdown() { document.getElementById('dropdown-menu').classList.toggle('hidden'); }
+// Global Click listener to dismiss Keyboard & Context Menu on outside tap
+document.addEventListener('click', (e) => {
+    hideContextMenu();
+    const dropdown = document.getElementById('dropdown-menu');
+    if(dropdown && !dropdown.classList.contains('hidden') && !e.target.classList.contains('top-menu-btn')) {
+        dropdown.classList.add('hidden');
+    }
+
+    // Blur Keyboard if clicking on chat empty space or background
+    const chatInput = document.getElementById('chat-input');
+    const isClickInsideInput = e.target.closest('#chat-input-bar') || e.target.closest('.send-btn');
+    const isClickInsideContext = e.target.closest('#msg-context-menu');
+    
+    if(!isClickInsideInput && !isClickInsideContext && document.activeElement === chatInput) {
+        chatInput.blur();
+    }
+});
+
+function toggleDropdown(e) { 
+    if(e) e.stopPropagation();
+    document.getElementById('dropdown-menu').classList.toggle('hidden'); 
+}
 
 function showModeSelection() {
     document.getElementById('mode-modal').classList.remove('hidden');
@@ -147,7 +226,7 @@ function openInfoModal(type) {
         body.innerText = "SecureSphere is an end-to-end secure messaging portal using Peerjs server.";
     } else if(type === 'help') {
         title.innerText = "Help & Support";
-        body.innerHTML = `Hope you are doing well if Amy problem please mail us to riyanshusinh@gmail.com <br><br>Have questions or feedback? Mail us at:<br><a class="link-btn" href="mailto:${USER_EMAIL}">${USER_EMAIL}</a>`;
+        body.innerHTML = `Hope you are doing well if Any problem please mail us to riyanshusinh@gmail.com <br><br>Have questions or feedback? Mail us at:<br><a class="link-btn" href="mailto:${USER_EMAIL}">${USER_EMAIL}</a>`;
     } else if(type === 'contact') {
         title.innerText = "Contact Us";
         body.innerHTML = `Designed and Developed by <strong>Riyanshu</strong>.<br><br>
@@ -241,7 +320,6 @@ function handleIncomingConnection(conn) {
         
         setupConnectionListeners(conn);
         
-        // Broadcast joined message to all peers & render locally
         broadcastSystemMsg(`${remoteUser} joined the chat`);
         updateUserCount();
         if(isHost && currentMode === 'shareit') updatePermissionModalUI();
@@ -251,9 +329,10 @@ function handleIncomingConnection(conn) {
 function setupConnectionListeners(conn) {
     conn.on('data', (data) => {
         if(data.type === 'chat') {
-            // FIX: Render message on current device when received
-            renderMessage(data.sender, data.text, false);
-            // If host, forward message to other connected clients
+            renderMessage(data.sender, data.text, false, data.replyTo);
+            if(isHost) broadcastData(data, conn.peer);
+        } else if(data.type === 'typing') {
+            handleRemoteTyping(data.sender, data.isTyping);
             if(isHost) broadcastData(data, conn.peer);
         } else if(data.type === 'sys_msg') {
             renderSystemMsg(data.text);
@@ -378,21 +457,46 @@ function toggleSelectAllPermissions(isAllowed) {
 
 function handleKeyPress(e) { if(e.key === 'Enter') sendChatMessage(); }
 
+function handleTypingInput() {
+    broadcastData({ type: 'typing', sender: userName, isTyping: true });
+    if(typingTimeout) clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => {
+        broadcastData({ type: 'typing', sender: userName, isTyping: false });
+    }, 1500);
+}
+
+function handleRemoteTyping(sender, isTyping) {
+    const el = document.getElementById('typing-indicator');
+    if(!el) return;
+    if(isTyping) {
+        el.innerText = `${sender}_typing...`;
+        el.classList.remove('hidden');
+    } else {
+        el.classList.add('hidden');
+    }
+}
+
 function sendChatMessage() {
     if(currentMode === 'shareit' && !isHost && !canIWriteInShareIt) return;
     const input = document.getElementById('chat-input');
     const text = input.value.trim();
     if(!text) return;
     
-    const payload = { type: 'chat', sender: userName, text };
+    const payload = { 
+        type: 'chat', 
+        sender: userName, 
+        text,
+        replyTo: activeReplyData ? { ...activeReplyData } : null
+    };
     
-    // Apne screen par message render karo
-    renderMessage(userName, text, true);
-    
-    // Sabhi connected clients/host ko bhejo
+    renderMessage(userName, text, true, activeReplyData);
     broadcastData(payload);
     
     input.value = '';
+    cancelReply();
+    
+    // Key fix: Keep focus on input so keyboard stays open!
+    input.focus();
 }
 
 function broadcastData(data, excludePeerId = null) {
@@ -403,7 +507,7 @@ function broadcastData(data, excludePeerId = null) {
     });
 }
 
-function renderMessage(sender, text, isMe) {
+function renderMessage(sender, text, isMe, replyTo = null) {
     const box = document.getElementById('chat-box');
     if(!box) return;
     
@@ -416,15 +520,87 @@ function renderMessage(sender, text, isMe) {
 
     const bubble = document.createElement('div');
     bubble.className = 'msg-bubble';
-    bubble.innerText = text;
+
+    // If message is a Reply to another message
+    if(replyTo) {
+        const quoteBox = document.createElement('div');
+        quoteBox.className = 'msg-reply-quote';
+        
+        const qSender = document.createElement('div');
+        qSender.className = 'quote-sender';
+        qSender.innerText = replyTo.sender;
+        
+        const qText = document.createElement('div');
+        qText.className = 'quote-text';
+        qText.innerText = replyTo.text;
+
+        quoteBox.appendChild(qSender);
+        quoteBox.appendChild(qText);
+        bubble.appendChild(quoteBox);
+    }
+
+    const textSpan = document.createElement('span');
+    textSpan.innerText = text;
+    bubble.appendChild(textSpan);
 
     container.appendChild(nameDiv);
     container.appendChild(bubble);
+
+    // Tap / Long-press event to open Copy/Reply Menu
+    container.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showContextMenu(e.clientX, e.clientY, { sender: isMe ? 'Me' : sender, text });
+    });
+
     box.appendChild(container);
-    box.scrollTop = box.scrollHeight;
+    
+    // Auto-scroll to bottom like WhatsApp
+    setTimeout(() => {
+        box.scrollTop = box.scrollHeight;
+    }, 50);
 }
 
-// FIX: Small system notification (like 'username joined') centered in chat
+function showContextMenu(x, y, msgData) {
+    selectedMsgData = msgData;
+    const menu = document.getElementById('msg-context-menu');
+    if(!menu) return;
+
+    menu.style.left = `${Math.min(x, window.innerWidth - 120)}px`;
+    menu.style.top = `${Math.min(y, window.innerHeight - 80)}px`;
+    menu.classList.remove('hidden');
+}
+
+function hideContextMenu() {
+    const menu = document.getElementById('msg-context-menu');
+    if(menu) menu.classList.add('hidden');
+}
+
+function handleContextCopy() {
+    if(selectedMsgData && selectedMsgData.text) {
+        navigator.clipboard.writeText(selectedMsgData.text);
+    }
+    hideContextMenu();
+}
+
+function handleContextReply() {
+    if(selectedMsgData) {
+        activeReplyData = { ...selectedMsgData };
+        document.getElementById('reply-sender-name').innerText = activeReplyData.sender;
+        document.getElementById('reply-preview-text').innerText = activeReplyData.text;
+        document.getElementById('reply-preview-container').classList.remove('hidden');
+        
+        const input = document.getElementById('chat-input');
+        if(input) input.focus();
+    }
+    hideContextMenu();
+}
+
+function cancelReply() {
+    activeReplyData = null;
+    const preview = document.getElementById('reply-preview-container');
+    if(preview) preview.classList.add('hidden');
+}
+
 function renderSystemMsg(text) {
     const box = document.getElementById('chat-box');
     if(!box) return;
@@ -470,6 +646,7 @@ function restartSystem() {
     userName = '';
     roomCode = '';
     canIWriteInShareIt = false;
+    cancelReply();
     
     const chatBox = document.getElementById('chat-box');
     if(chatBox) chatBox.innerHTML = '';
