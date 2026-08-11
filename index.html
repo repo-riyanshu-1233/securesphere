@@ -23,8 +23,9 @@
         <div id="terminal-logs" class="terminal-logs"></div>
     </div>
 
+    <!-- DASHBOARD SCREEN -->
     <div id="dashboard-screen" class="hidden">
-        
+        <!-- Dashboard Video Background Loop -->
         <video autoplay loop muted playsinline class="bg-video">
             <source src="static/videos/dashbg.mp4" type="video/mp4">
         </video>
@@ -47,65 +48,67 @@
         <div class="bottom-action-container fade-item delay-2">
             <button class="neu-primary-btn" onclick="showModeSelection()">Start Chatting</button>
         </div>
+    </div>
 
-        <div id="under-build-modal" class="modal hidden">
-            <div class="neu-card">
-                <button class="modal-close-icon" onclick="closeNoticeModal()">×</button>
-                <h3 style="color:#d9534f; margin-bottom:8px;" class="fade-item delay-1">Notice: Under Build</h3>
-                <p class="fade-item delay-2" style="font-size:12.5px; color:#444; line-height:1.5; margin-bottom:12px;">
-                    This web app is still in the building process. Some features may be slow or might not work as expected.
-                </p>
-                <p class="fade-item delay-3" style="font-size:12px; color:#666; line-height:1.4;">
-                    If you encounter any bugs or issues, please let us know! Share your thoughts to help upgrade my web app via the <strong>Top Right Menu (☰) → Contact Us</strong> section via Mail or Instagram.
-                </p>
-            </div>
-        </div>
-
-        <div id="mode-modal" class="modal hidden">
-            <div class="neu-card">
-                <h3 class="fade-item delay-1">Select Chat Type</h3>
-                <button class="neu-primary-btn fade-item delay-2" style="border-radius:14px; margin-bottom:10px;" onclick="openRoomForm('group')">Group Chat (Max 10)</button>
-                <button class="neu-secondary-btn fade-item delay-3" style="margin-bottom:10px;" onclick="openRoomForm('private')">Private Room (1-1)</button>
-                <button class="neu-secondary-btn fade-item delay-4" onclick="openRoomForm('shareit')">Share It(50+)</button>
-                <button class="neu-secondary-btn fade-item delay-5" style="background:transparent; box-shadow:none; margin-top:10px;" onclick="closeModals()">Close</button>
-            </div>
-        </div>
-
-        <div id="form-modal" class="modal hidden">
-            <div class="neu-card">
-                <h3 id="form-title" class="fade-item delay-1">Room Setup</h3>
-                
-                <input type="text" id="user-name-input" placeholder="Enter Your Name" class="neu-input fade-item delay-2">
-                
-                <div class="tab-group fade-item delay-3">
-                    <button class="neu-tab active" id="tab-create" onclick="toggleFormMode('create')">Create Room</button>
-                    <button class="neu-tab" id="tab-join" onclick="toggleFormMode('join')">Join Room</button>
-                </div>
-
-                <div id="create-sec" class="fade-item delay-4">
-                    <input type="text" id="custom-code-input" placeholder="Custom 4-Char Code (Optional)" maxlength="4" class="neu-input">
-                    <button class="neu-primary-btn" style="border-radius:12px; margin-top:10px;" onclick="handleCreateRoom()">Create & Launch</button>
-                </div>
-
-                <div id="join-sec" class="hidden fade-item delay-4">
-                    <input type="text" id="join-code-input" placeholder="Enter 4-Char Room Code" maxlength="4" class="neu-input">
-                    <button class="neu-primary-btn" style="border-radius:12px; margin-top:10px;" onclick="handleJoinRoom()">Join Room</button>
-                </div>
-                
-                <button class="neu-secondary-btn fade-item delay-5" style="background:transparent; box-shadow:none;" onclick="closeModals()">← Back</button>
-            </div>
-        </div>
-
-        <div id="info-modal" class="modal hidden">
-            <div class="neu-card">
-                <button class="modal-close-icon" onclick="closeInfoModal()">×</button>
-                <h3 id="info-title" class="fade-item delay-1">Information</h3>
-                <div id="info-body" class="fade-item delay-2" style="font-size:13px; color:#444; line-height:1.6; margin-bottom:15px;"></div>
-                <button class="neu-secondary-btn fade-item delay-3" onclick="closeInfoModal()">Back</button>
-            </div>
+    <!-- ALL MODALS ARE OUTSIDE DASHBOARD SCREEN (FIXED POSITIONING) -->
+    <div id="under-build-modal" class="modal hidden">
+        <div class="neu-card">
+            <button class="modal-close-icon" onclick="closeNoticeModal()">×</button>
+            <h3 style="color:#d9534f; margin-bottom:8px;" class="fade-item delay-1">Notice: Under Build</h3>
+            <p class="fade-item delay-2" style="font-size:12.5px; color:#444; line-height:1.5; margin-bottom:12px;">
+                This web app is still in the building process. Some features may be slow or might not work as expected.
+            </p>
+            <p class="fade-item delay-3" style="font-size:12px; color:#666; line-height:1.4;">
+                If you encounter any bugs or issues, please let us know! Share your thoughts to help upgrade my web app via the <strong>Top Right Menu (☰) → Contact Us</strong> section via Mail or Instagram.
+            </p>
         </div>
     </div>
 
+    <div id="mode-modal" class="modal hidden">
+        <div class="neu-card">
+            <h3 class="fade-item delay-1">Select Chat Type</h3>
+            <button class="neu-primary-btn fade-item delay-2" style="border-radius:14px; margin-bottom:10px;" onclick="openRoomForm('group')">Group Chat (Max 10)</button>
+            <button class="neu-secondary-btn fade-item delay-3" style="margin-bottom:10px;" onclick="openRoomForm('private')">Private Room (1-1)</button>
+            <button class="neu-secondary-btn fade-item delay-4" onclick="openRoomForm('shareit')">Share It(50+)</button>
+            <button class="neu-secondary-btn fade-item delay-5" style="background:transparent; box-shadow:none; margin-top:10px;" onclick="closeModals()">Close</button>
+        </div>
+    </div>
+
+    <div id="form-modal" class="modal hidden">
+        <div class="neu-card">
+            <h3 id="form-title" class="fade-item delay-1">Room Setup</h3>
+            
+            <input type="text" id="user-name-input" placeholder="Enter Your Name" class="neu-input fade-item delay-2">
+            
+            <div class="tab-group fade-item delay-3">
+                <button class="neu-tab active" id="tab-create" onclick="toggleFormMode('create')">Create Room</button>
+                <button class="neu-tab" id="tab-join" onclick="toggleFormMode('join')">Join Room</button>
+            </div>
+
+            <div id="create-sec" class="fade-item delay-4">
+                <input type="text" id="custom-code-input" placeholder="Custom 4-Char Code (Optional)" maxlength="4" class="neu-input">
+                <button class="neu-primary-btn" style="border-radius:12px; margin-top:10px;" onclick="handleCreateRoom()">Create & Launch</button>
+            </div>
+
+            <div id="join-sec" class="hidden fade-item delay-4">
+                <input type="text" id="join-code-input" placeholder="Enter 4-Char Room Code" maxlength="4" class="neu-input">
+                <button class="neu-primary-btn" style="border-radius:12px; margin-top:10px;" onclick="handleJoinRoom()">Join Room</button>
+            </div>
+            
+            <button class="neu-secondary-btn fade-item delay-5" style="background:transparent; box-shadow:none;" onclick="closeModals()">← Back</button>
+        </div>
+    </div>
+
+    <div id="info-modal" class="modal hidden">
+        <div class="neu-card">
+            <button class="modal-close-icon" onclick="closeInfoModal()">×</button>
+            <h3 id="info-title" class="fade-item delay-1">Information</h3>
+            <div id="info-body" class="fade-item delay-2" style="font-size:13px; color:#444; line-height:1.6; margin-bottom:15px;"></div>
+            <button class="neu-secondary-btn fade-item delay-3" onclick="closeInfoModal()">Back</button>
+        </div>
+    </div>
+
+    <!-- CHAT SCREEN -->
     <div id="chat-screen" class="hidden fade-item delay-1">
         <div class="chat-header">
             <div class="header-left">
