@@ -1,6 +1,6 @@
 const MAINTENANCE_MODE = false;
 const SHOW_UNDER_BUILD_NOTICE = true;
-const SHOW_INTRO_VIDEO = true; 
+const SHOW_INTRO_VIDEO = false; 
 const USER_EMAIL = "riyanshusinh@gmail.com ";
 const USER_INSTAGRAM = "https://instagram.com/riyanshu1233";
 const PORTFOLIO_WEBSITE = "https://riyanshusinhweb.onrender.com";
