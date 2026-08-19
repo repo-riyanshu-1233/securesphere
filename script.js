@@ -241,15 +241,15 @@ function openInfoModal(type) {
     
     if(type === 'about') {
         title.innerText = "About SecureSphere";
-        body.innerText = "SecureSphere is an end-to-end secure messaging portal using Peerjs server.";
+        body.innerText = "SecureSphere is an end-to-end secure messaging portal designed by riyanshu.";
     } else if(type === 'help') {
         title.innerText = "Help & Support";
         body.innerHTML = `Hope you are doing well if Any problem please mail us to riyanshusinh@gmail.com <br><br>Have questions or feedback? Mail us at:<br><a class="link-btn" href="mailto:${USER_EMAIL}">${USER_EMAIL}</a>`;
     } else if(type === 'contact') {
         title.innerText = "Contact Us";
         body.innerHTML = `Designed and Developed by <strong>Riyanshu</strong>.<br><br>
-        📧 Email: <a class="link-btn" href="mailto:${USER_EMAIL}">${USER_EMAIL}</a><br><br>
-        📸 Instagram: <a class="link-btn" href="${USER_INSTAGRAM}" target="_blank">View Profile ↗</a>`;
+         Email: <a class="link-btn" href="mailto:${USER_EMAIL}">${USER_EMAIL}</a><br><br>
+        Instagram: <a class="link-btn" href="${USER_INSTAGRAM}" target="_blank">View Profile ↗</a>`;
     }
 }
 
