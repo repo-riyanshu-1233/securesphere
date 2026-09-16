@@ -1,1 +1,1 @@
-statics
+static
