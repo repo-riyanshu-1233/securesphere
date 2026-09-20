@@ -298,7 +298,6 @@ html, body { height: 100%; height: 100dvh; background: var(--bg-deep-black); col
 }
 .neu-input:focus { border-color: var(--accent-teal); }
 
-/* Contributors List & Multi-line Layout Fix */
 .contributors-list {
     margin-top: 12px;
     display: flex;
@@ -405,7 +404,7 @@ html, body { height: 100%; height: 100dvh; background: var(--bg-deep-black); col
 .quote-sender { font-weight: bold; color: #76c7c0; }
 .quote-text { color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
 
-.msg-bubble { padding: 10px 14px; border-radius: 14px; font-size: 14px; line-height: 1.4; word-break: break-word; backdrop-filter: blur(4px); }
+.msg-bubble { padding: 10px 14px; border-radius: 14px; font-size: 14px; line-height: 1.4; word-break: break-word; backdrop-filter: blur(4px); white-space: pre-wrap; }
 .my-msg .msg-bubble { background: rgba(2, 73, 80, 0.85); color: #fff; border-top-right-radius: 2px; border: 1px solid rgba(255, 255, 255, 0.15); }
 .peer-msg .msg-bubble { background: rgba(28, 29, 36, 0.85); color: #ececec; border-top-left-radius: 2px; border: 1px solid rgba(255, 255, 255, 0.08); }
 
