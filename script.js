@@ -19,6 +19,7 @@ let canIWriteInShareIt = false;
 let typingTimeout = null;
 let selectedMsgData = null; 
 let activeReplyData = null;  
+let incomingChunks = {};
 
 const logLines = [
     { text: "INITIALIZING SECURE NETWORK SYSTEM...", type: "log-green" },
@@ -353,28 +354,55 @@ function handleIncomingConnection(conn) {
     });
 }
 
+function handleIncomingPacket(data, originPeer) {
+    if(data.type === 'chunk_msg') {
+        if(!incomingChunks[data.msgId]) {
+            incomingChunks[data.msgId] = {
+                total: data.totalChunks,
+                received: 0,
+                chunks: []
+            };
+        }
+        const packet = incomingChunks[data.msgId];
+        packet.chunks[data.chunkIndex] = data.data;
+        packet.received++;
+
+        if(packet.received === packet.total) {
+            const fullStr = packet.chunks.join('');
+            delete incomingChunks[data.msgId];
+            try {
+                const parsedData = JSON.parse(fullStr);
+                handleIncomingPacket(parsedData, originPeer);
+            } catch(e) {}
+        }
+        return;
+    }
+
+    if(data.type === 'chat') {
+        renderMessage(data.sender, data.text, false, data.replyTo);
+        if(isHost) broadcastData(data, originPeer);
+    } else if(data.type === 'typing') {
+        handleRemoteTyping(data.sender, data.isTyping);
+        if(isHost) broadcastData(data, originPeer);
+    } else if(data.type === 'sys_msg') {
+        renderSystemMsg(data.text);
+        if(isHost) broadcastData(data, originPeer);
+    } else if(data.type === 'dissolve') {
+        showCustomAlert("Chat Dissolved", "The session has been wiped by host.", [
+            { text: "OK", class: "neu-primary-btn", onClick: restartSystem }
+        ]);
+    } else if(data.type === 'perm_update') {
+        if(!isHost) {
+            canIWriteInShareIt = !!data.allowed;
+            applyInputPermissionState();
+            renderSystemMsg(data.allowed ? "Host has granted you chat permissions." : "Host has revoked your chat permissions.");
+        }
+    }
+}
+
 function setupConnectionListeners(conn) {
     conn.on('data', (data) => {
-        if(data.type === 'chat') {
-            renderMessage(data.sender, data.text, false, data.replyTo);
-            if(isHost) broadcastData(data, conn.peer);
-        } else if(data.type === 'typing') {
-            handleRemoteTyping(data.sender, data.isTyping);
-            if(isHost) broadcastData(data, conn.peer);
-        } else if(data.type === 'sys_msg') {
-            renderSystemMsg(data.text);
-            if(isHost) broadcastData(data, conn.peer);
-        } else if(data.type === 'dissolve') {
-            showCustomAlert("Chat Dissolved", "The session has been wiped by host.", [
-                { text: "OK", class: "neu-primary-btn", onClick: restartSystem }
-            ]);
-        } else if(data.type === 'perm_update') {
-            if(!isHost) {
-                canIWriteInShareIt = !!data.allowed;
-                applyInputPermissionState();
-                renderSystemMsg(data.allowed ? "Host has granted you chat permissions." : "Host has revoked your chat permissions.");
-            }
-        }
+        handleIncomingPacket(data, conn.peer);
     });
     
     conn.on('close', () => {
@@ -528,9 +556,27 @@ function sendChatMessage() {
 }
 
 function broadcastData(data, excludePeerId = null) {
+    const rawStr = JSON.stringify(data);
+    const CHUNK_SIZE = 8000;
+    
     Object.keys(connections).forEach(peerId => {
         if(peerId !== excludePeerId && connections[peerId] && connections[peerId].open) {
-            connections[peerId].send(data);
+            if(rawStr.length <= CHUNK_SIZE) {
+                connections[peerId].send(data);
+            } else {
+                const msgId = Math.random().toString(36).substring(2, 9);
+                const totalChunks = Math.ceil(rawStr.length / CHUNK_SIZE);
+                for(let i = 0; i < totalChunks; i++) {
+                    const chunk = rawStr.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+                    connections[peerId].send({
+                        type: 'chunk_msg',
+                        msgId: msgId,
+                        chunkIndex: i,
+                        totalChunks: totalChunks,
+                        data: chunk
+                    });
+                }
+            }
         }
     });
 }
@@ -668,6 +714,7 @@ function restartSystem() {
     userName = '';
     roomCode = '';
     canIWriteInShareIt = false;
+    incomingChunks = {};
     cancelReply();
     
     const chatBox = document.getElementById('chat-box');
